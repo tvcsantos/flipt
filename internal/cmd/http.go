@@ -22,6 +22,7 @@ import (
 	"go.flipt.io/flipt/internal/info"
 	"go.flipt.io/flipt/rpc/flipt"
 	"go.flipt.io/flipt/rpc/flipt/evaluation"
+	"go.flipt.io/flipt/rpc/flipt/manage"
 	"go.flipt.io/flipt/rpc/flipt/meta"
 	"go.flipt.io/flipt/ui"
 	"go.uber.org/zap"
@@ -60,6 +61,7 @@ func NewHTTPServer(
 		api             = gateway.NewGatewayServeMux(logger)
 		evaluateAPI     = gateway.NewGatewayServeMux(logger)
 		evaluateDataAPI = gateway.NewGatewayServeMux(logger)
+		manageAPI       = gateway.NewGatewayServeMux(logger)
 		httpPort        = cfg.Server.HTTPPort
 	)
 
@@ -76,6 +78,10 @@ func NewHTTPServer(
 	}
 
 	if err := evaluation.RegisterDataServiceHandler(ctx, evaluateDataAPI, conn); err != nil {
+		return nil, fmt.Errorf("registering grpc gateway: %w", err)
+	}
+
+	if err := manage.RegisterManageServiceHandler(ctx, manageAPI, conn); err != nil {
 		return nil, fmt.Errorf("registering grpc gateway: %w", err)
 	}
 
@@ -146,6 +152,7 @@ func NewHTTPServer(
 		r.Mount("/api/v1", api)
 		r.Mount("/evaluate/v1", evaluateAPI)
 		r.Mount("/internal/v1", evaluateDataAPI)
+		r.Mount("/manage/v1", manageAPI)
 
 		// mount all authentication related HTTP components
 		// to the chi router.

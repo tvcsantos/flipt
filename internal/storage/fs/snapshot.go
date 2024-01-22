@@ -146,7 +146,7 @@ func SnapshotFromFiles(logger *zap.Logger, files []fs.File, opts ...containers.O
 
 // WalkDocuments walks all the Flipt feature documents found in the target fs.FS
 // based on either the default index file or an index file located in the root
-func WalkDocuments(logger *zap.Logger, src fs.FS, fn func(*ext.Document) error) error {
+func WalkDocuments(logger *zap.Logger, src fs.FS, fn func(name string, docs []*ext.Document) error) error {
 	paths, err := listStateFiles(logger, src)
 	if err != nil {
 		return err
@@ -166,10 +166,8 @@ func WalkDocuments(logger *zap.Logger, src fs.FS, fn func(*ext.Document) error) 
 			return err
 		}
 
-		for _, doc := range docs {
-			if err := fn(doc); err != nil {
-				return err
-			}
+		if err := fn(file, docs); err != nil {
+			return nil
 		}
 	}
 

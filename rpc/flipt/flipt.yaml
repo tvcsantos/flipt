@@ -315,3 +315,15 @@ http:
   # internal routes
   - selector: flipt.evaluation.DataService.EvaluationSnapshotNamespace
     get: /internal/v1/evaluation/snapshot/namespace/{key}
+
+  # management routes
+  - selector: flipt.manage.ManageService.GetNamespace
+    get: /manage/c1/namespaces/{key}
+
+  - selector: flipt.manage.ManageService.PutFlag
+    put: /manage/v1/namespaces/{namespace}/flags/{key}
+    body: "*"
+
+  - selector: flipt.manage.ManageService.PutSegment
+    put: /manage/v1/namespaces/{namespace}/segments/{key}
+    body: "*"

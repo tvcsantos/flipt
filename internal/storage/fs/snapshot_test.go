@@ -88,8 +88,8 @@ func TestWalkDocuments(t *testing.T) {
 			require.NoError(t, err)
 
 			var docs []*ext.Document
-			require.NoError(t, WalkDocuments(zaptest.NewLogger(t), src, func(d *ext.Document) error {
-				docs = append(docs, d)
+			require.NoError(t, WalkDocuments(zaptest.NewLogger(t), src, func(_ string, d []*ext.Document) error {
+				docs = append(docs, d...)
 				return nil
 			}))
 

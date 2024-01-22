@@ -2,19 +2,30 @@ package git
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
 	"sync"
+	"time"
 
+	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/storage/memory"
+	"github.com/gofrs/uuid"
 	"go.flipt.io/flipt/internal/containers"
+	"go.flipt.io/flipt/internal/ext"
 	"go.flipt.io/flipt/internal/gitfs"
 	"go.flipt.io/flipt/internal/storage"
 	storagefs "go.flipt.io/flipt/internal/storage/fs"
+	"go.flipt.io/flipt/rpc/flipt/manage"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v2"
 )
 
 // REFERENCE_CACHE_EXTRA_CAPACITY is the additionally capacity reserved in the cache
@@ -39,8 +50,9 @@ type SnapshotStore struct {
 	caBundle        []byte
 	pollOpts        []containers.Option[storagefs.Poller]
 
-	mu   sync.RWMutex
-	repo *git.Repository
+	mu      sync.RWMutex
+	repo    *git.Repository
+	storage *memory.Storage
 
 	snaps *storagefs.SnapshotCache[plumbing.Hash]
 }
@@ -106,7 +118,8 @@ func NewSnapshotStore(ctx context.Context, logger *zap.Logger, url string, opts 
 		return nil, err
 	}
 
-	store.repo, err = git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
+	store.storage = memory.NewStorage()
+	store.repo, err = git.Clone(store.storage, nil, &git.CloneOptions{
 		Auth:            store.auth,
 		URL:             store.url,
 		CABundle:        store.caBundle,
@@ -236,6 +249,256 @@ func (s *SnapshotStore) buildReference(ctx context.Context, ref string) (*storag
 	}
 
 	return snap, hash, nil
+}
+
+func (s *SnapshotStore) Update(ctx context.Context, storeRef storage.Reference, message string, flag *manage.Flag) (string, error) {
+	ref := string(storeRef)
+	if ref == "" {
+		ref = s.baseRef
+	}
+
+	hash, err := s.resolve(ref)
+	if err != nil {
+		return "", err
+	}
+
+	// shallow copy the store without the existing index
+	store := &memory.Storage{
+		ReferenceStorage: s.storage.ReferenceStorage,
+		ConfigStorage:    s.storage.ConfigStorage,
+		ShallowStorage:   s.storage.ShallowStorage,
+		ObjectStorage:    s.storage.ObjectStorage,
+		ModuleStorage:    s.storage.ModuleStorage,
+	}
+
+	dir, err := os.MkdirTemp("", "flipt-proposal-*")
+	if err != nil {
+		return "", err
+	}
+
+	defer func() {
+		_ = os.RemoveAll(dir)
+	}()
+
+	// open repository on store with in-memory workspace
+	repo, err := git.Open(store, osfs.New(dir))
+	if err != nil {
+		return "", fmt.Errorf("open repo: %w", err)
+	}
+
+	work, err := repo.Worktree()
+	if err != nil {
+		return "", fmt.Errorf("open worktree: %w", err)
+	}
+
+	// create proposal branch (flipt/proposal/$id)
+	branch := fmt.Sprintf("flipt/proposal/%s", uuid.Must(uuid.NewV4()))
+	if err := repo.CreateBranch(&config.Branch{
+		Name:   branch,
+		Remote: "origin",
+	}); err != nil {
+		return "", fmt.Errorf("create branch: %w", err)
+	}
+
+	if err := work.Checkout(&git.CheckoutOptions{
+		Branch: plumbing.NewBranchReferenceName(branch),
+		Create: true,
+		Hash:   hash,
+	}); err != nil {
+		return "", fmt.Errorf("checkout branch: %w", err)
+	}
+
+	var (
+		path string
+		docs []*ext.Document
+	)
+
+	if err := storagefs.WalkDocuments(s.logger, os.DirFS(dir), func(name string, ds []*ext.Document) error {
+		// search through documents in each file looking for a matching namespaced
+		for _, doc := range ds {
+			if doc.Namespace != flag.Namespace {
+				continue
+			}
+
+			docs = ds
+			path = name
+
+			newFlag := &ext.Flag{
+				Type:        flag.Type.String(),
+				Key:         flag.Key,
+				Name:        flag.Name,
+				Description: flag.Description,
+				Enabled:     flag.Enabled,
+			}
+
+			for _, variant := range flag.Variants {
+				newFlag.Variants = append(newFlag.Variants, &ext.Variant{
+					Key:         variant.Key,
+					Name:        variant.Name,
+					Description: variant.Description,
+					Attachment:  variant.Attachment,
+				})
+			}
+
+			for i, rule := range flag.Rules {
+				newRule := &ext.Rule{
+					Rank: uint(i + 1),
+					Segment: &ext.SegmentEmbed{
+						IsSegment: &ext.Segments{
+							Keys:            rule.Segments,
+							SegmentOperator: rule.SegmentOperator.String(),
+						},
+					},
+				}
+
+				for _, dist := range rule.Distributions {
+					newRule.Distributions = append(newRule.Distributions, &ext.Distribution{
+						Rollout:    dist.Rollout,
+						VariantKey: dist.Variant,
+					})
+				}
+
+				newFlag.Rules = append(newFlag.Rules, newRule)
+			}
+
+			for _, rollout := range flag.Rollouts {
+				newRollout := &ext.Rollout{
+					Description: rollout.Description,
+				}
+
+				if segment := rollout.GetSegment(); segment != nil {
+					newRollout.Segment = &ext.SegmentRule{
+						Keys:     segment.Segments,
+						Operator: segment.SegmentOperator.String(),
+						Value:    segment.Value,
+					}
+				}
+
+				if threshold := rollout.GetThreshold(); threshold != nil {
+					newRollout.Threshold = &ext.ThresholdRule{
+						Percentage: threshold.Percentage,
+						Value:      threshold.Value,
+					}
+				}
+
+				newFlag.Rollouts = append(newFlag.Rollouts, newRollout)
+			}
+
+			var found bool
+			for i, f := range doc.Flags {
+				if found = f.Key == flag.Key; found {
+					doc.Flags[i] = newFlag
+					break
+				}
+			}
+
+			if !found {
+				doc.Flags = append(doc.Flags, newFlag)
+			}
+
+			return nil
+		}
+
+		return nil
+	}); err != nil {
+		return "", err
+	}
+
+	if path == "" {
+		return "", fmt.Errorf("namespace %q: not found", flag.Namespace)
+	}
+
+	fi, err := work.Filesystem.OpenFile(path, os.O_RDWR|os.O_TRUNC, 0644)
+	if err != nil {
+		return "", fmt.Errorf("namespace %q: %w", flag.Namespace, err)
+	}
+
+	var encode func(any) error
+	extn := filepath.Ext(path)
+	switch extn {
+	case ".yaml", ".yml":
+		encode = yaml.NewEncoder(fi).Encode
+	case "", ".json":
+		encode = json.NewEncoder(fi).Encode
+	default:
+		_ = fi.Close()
+		return "", fmt.Errorf("unexpected extension: %q", extn)
+	}
+
+	for _, doc := range docs {
+		if err := encode(doc); err != nil {
+			_ = fi.Close()
+			return "", err
+		}
+	}
+
+	if err := fi.Close(); err != nil {
+		return "", err
+	}
+
+	// TODO(georgemac): report upstream to go-git
+	// For some reason, even with AllowingEmptyCommits == false this
+	// still produces empty commits and pushes them.
+	// It could be to do with how the index is nuked before hand
+	// to support concurrent requests (needs investigation).
+	// For now lets just return empty when the status has nothing in it.
+	status, err := work.Status()
+	if err != nil {
+		return "", fmt.Errorf("getting status: %w", err)
+	}
+
+	if len(status) == 0 {
+		return "", nil
+	}
+
+	if err := work.AddWithOptions(&git.AddOptions{All: true}); err != nil {
+		return "", fmt.Errorf("adding changes: %w", err)
+	}
+
+	var (
+		now       = time.Now().UTC()
+		signature = &object.Signature{
+			Email: "dev@flipt.io",
+			Name:  "dev",
+			When:  now,
+		}
+	)
+	_, err = work.Commit(message, &git.CommitOptions{
+		Author:    signature,
+		Committer: signature,
+	})
+	if err != nil {
+		// NOTE: currently with go-git we can see https://github.com/go-git/go-git/issues/723
+		// This occurs when the result of the removal leads to an empty repository.
+		// Just an FYI why a delete might fail silently when the result is the target repo is empty.
+		if errors.Is(err, git.ErrEmptyCommit) {
+			return "", nil
+		}
+
+		return "", fmt.Errorf("committing changes: %w", err)
+	}
+
+	s.logger.Debug("Pushing Changes", zap.String("branch", branch))
+
+	b, err := repo.Branch(branch)
+	if err != nil {
+		return "", err
+	}
+	s.logger.Debug("Branch", zap.String("name", b.Name), zap.String("remote", b.Remote))
+
+	// push to proposed branch
+	if err := repo.PushContext(ctx, &git.PushOptions{
+		Auth:       s.auth,
+		RemoteName: "origin",
+		RefSpecs: []config.RefSpec{
+			config.RefSpec(fmt.Sprintf("%s:refs/heads/%s", branch, branch)),
+			config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/heads/%s", branch, branch)),
+		},
+	}); err != nil {
+		return "", fmt.Errorf("pushing changes: %w", err)
+	}
+
+	return branch, nil
 }
 
 func (s *SnapshotStore) resolve(ref string) (plumbing.Hash, error) {

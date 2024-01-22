@@ -110,7 +110,7 @@ message Flag {
   repeated Variant variants = 7;
   string namespace_key = 8;
   FlagType type = 9;
- }
+}
 
 message FlagList {
   repeated Flag flags = 1;
@@ -495,7 +495,7 @@ service Flipt {
   rpc BatchEvaluate(BatchEvaluationRequest) returns (BatchEvaluationResponse) {
     option deprecated = true;
   }
-  rpc GetNamespace(GetNamespaceRequest) returns (Namespace) { } 
+  rpc GetNamespace(GetNamespaceRequest) returns (Namespace) {} 
   rpc ListNamespaces(ListNamespaceRequest) returns (NamespaceList) {}
   rpc CreateNamespace(CreateNamespaceRequest) returns (Namespace) {}
   rpc UpdateNamespace(UpdateNamespaceRequest) returns (Namespace) {}

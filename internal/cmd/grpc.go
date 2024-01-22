@@ -27,6 +27,7 @@ import (
 	authmiddlewaregrpc "go.flipt.io/flipt/internal/server/auth/middleware/grpc"
 	"go.flipt.io/flipt/internal/server/evaluation"
 	evaluationdata "go.flipt.io/flipt/internal/server/evaluation/data"
+	"go.flipt.io/flipt/internal/server/manage"
 	"go.flipt.io/flipt/internal/server/metadata"
 	middlewaregrpc "go.flipt.io/flipt/internal/server/middleware/grpc"
 	"go.flipt.io/flipt/internal/storage"
@@ -122,7 +123,10 @@ func NewGRPCServer(
 		return server.ln.Close()
 	})
 
-	var store storage.Store
+	var (
+		store       storage.Store
+		manageStore manage.Store
+	)
 
 	switch cfg.Storage.Type {
 	case "", config.DatabaseStorageType:
@@ -147,7 +151,7 @@ func NewGRPCServer(
 		logger.Debug("database driver configured", zap.Stringer("driver", driver))
 	default:
 		// otherwise, attempt to configure a declarative backend store
-		store, err = fsstore.NewStore(ctx, logger, cfg)
+		store, manageStore, err = fsstore.NewStore(ctx, logger, cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -270,6 +274,10 @@ func NewGRPCServer(
 	register.Add(metasrv)
 	register.Add(evalsrv)
 	register.Add(evalDataSrv)
+
+	if manageStore != nil {
+		register.Add(manage.NewServer(logger, manageStore))
+	}
 
 	// forward internal gRPC logging to zap
 	grpcLogLevel, err := zapcore.ParseLevel(cfg.Log.GRPCLevel)

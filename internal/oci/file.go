@@ -394,28 +394,30 @@ func (s *Store) Build(ctx context.Context, src fs.FS, ref Reference) (Bundle, er
 }
 
 func (s *Store) buildLayers(ctx context.Context, store oras.Target, src fs.FS) (layers []v1.Descriptor, _ error) {
-	if err := storagefs.WalkDocuments(s.logger, src, func(doc *ext.Document) error {
-		payload, err := json.Marshal(&doc)
-		if err != nil {
-			return err
+	if err := storagefs.WalkDocuments(s.logger, src, func(_ string, docs []*ext.Document) error {
+		for _, doc := range docs {
+			payload, err := json.Marshal(&doc)
+			if err != nil {
+				return err
+			}
+
+			desc := v1.Descriptor{
+				Digest:    digest.FromBytes(payload),
+				Size:      int64(len(payload)),
+				MediaType: MediaTypeFliptNamespace,
+				Annotations: map[string]string{
+					AnnotationFliptNamespace: doc.Namespace,
+				},
+			}
+
+			s.logger.Debug("adding layer", zap.String("digest", desc.Digest.Hex()), zap.String("namespace", doc.Namespace))
+
+			if err := store.Push(ctx, desc, bytes.NewReader(payload)); err != nil && !errors.Is(err, errdef.ErrAlreadyExists) {
+				return err
+			}
+
+			layers = append(layers, desc)
 		}
-
-		desc := v1.Descriptor{
-			Digest:    digest.FromBytes(payload),
-			Size:      int64(len(payload)),
-			MediaType: MediaTypeFliptNamespace,
-			Annotations: map[string]string{
-				AnnotationFliptNamespace: doc.Namespace,
-			},
-		}
-
-		s.logger.Debug("adding layer", zap.String("digest", desc.Digest.Hex()), zap.String("namespace", doc.Namespace))
-
-		if err := store.Push(ctx, desc, bytes.NewReader(payload)); err != nil && !errors.Is(err, errdef.ErrAlreadyExists) {
-			return err
-		}
-
-		layers = append(layers, desc)
 		return nil
 	}); err != nil {
 		return nil, err

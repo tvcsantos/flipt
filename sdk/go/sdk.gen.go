@@ -7,6 +7,7 @@ import (
 	flipt "go.flipt.io/flipt/rpc/flipt"
 	auth "go.flipt.io/flipt/rpc/flipt/auth"
 	evaluation "go.flipt.io/flipt/rpc/flipt/evaluation"
+	manage "go.flipt.io/flipt/rpc/flipt/manage"
 	meta "go.flipt.io/flipt/rpc/flipt/meta"
 	metadata "google.golang.org/grpc/metadata"
 	os "os"
@@ -28,6 +29,7 @@ type Transport interface {
 	AuthClient() AuthClient
 	EvaluationClient() evaluation.EvaluationServiceClient
 	FliptClient() flipt.FliptClient
+	ManageClient() manage.ManageServiceClient
 	MetaClient() meta.MetadataServiceClient
 }
 
@@ -233,6 +235,13 @@ func (s SDK) Evaluation() *Evaluation {
 func (s SDK) Flipt() *Flipt {
 	return &Flipt{
 		transport:              s.transport.FliptClient(),
+		authenticationProvider: s.authenticationProvider,
+	}
+}
+
+func (s SDK) Manage() *Manage {
+	return &Manage{
+		transport:              s.transport.ManageClient(),
 		authenticationProvider: s.authenticationProvider,
 	}
 }

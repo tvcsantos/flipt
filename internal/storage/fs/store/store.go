@@ -12,6 +12,7 @@ import (
 	"go.flipt.io/flipt/internal/config"
 	"go.flipt.io/flipt/internal/containers"
 	"go.flipt.io/flipt/internal/oci"
+	"go.flipt.io/flipt/internal/server/manage"
 	"go.flipt.io/flipt/internal/storage"
 	storagefs "go.flipt.io/flipt/internal/storage/fs"
 	"go.flipt.io/flipt/internal/storage/fs/git"
@@ -27,7 +28,7 @@ import (
 
 // NewStore is a constructor that handles all the known declarative backend storage types
 // Given the provided storage type is know, the relevant backend is configured and returned
-func NewStore(ctx context.Context, logger *zap.Logger, cfg *config.Config) (_ storage.Store, err error) {
+func NewStore(ctx context.Context, logger *zap.Logger, cfg *config.Config) (_ storage.Store, _ manage.Store, err error) {
 	switch cfg.Storage.Type {
 	case config.GitStorageType:
 		opts := []containers.Option[git.SnapshotStore]{
@@ -44,7 +45,7 @@ func NewStore(ctx context.Context, logger *zap.Logger, cfg *config.Config) (_ st
 			if bytes, err := os.ReadFile(cfg.Storage.Git.CaCertPath); err == nil {
 				opts = append(opts, git.WithCABundle(bytes))
 			} else {
-				return nil, err
+				return nil, nil, err
 			}
 		}
 
@@ -75,7 +76,7 @@ func NewStore(ctx context.Context, logger *zap.Logger, cfg *config.Config) (_ st
 				)
 			}
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			// we're protecting against this explicitly so we can disable
@@ -90,19 +91,24 @@ func NewStore(ctx context.Context, logger *zap.Logger, cfg *config.Config) (_ st
 
 		snapStore, err := git.NewSnapshotStore(ctx, logger, cfg.Storage.Git.Repository, opts...)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
-		return storagefs.NewStore(snapStore), nil
+		return storagefs.NewStore(snapStore), snapStore, nil
 	case config.LocalStorageType:
 		snapStore, err := local.NewSnapshotStore(ctx, logger, cfg.Storage.Local.Path)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
-		return storagefs.NewStore(storagefs.NewSingleReferenceStore(logger, snapStore)), nil
+		return storagefs.NewStore(storagefs.NewSingleReferenceStore(logger, snapStore)), nil, nil
 	case config.ObjectStorageType:
-		return newObjectStore(ctx, cfg, logger)
+		store, err := newObjectStore(ctx, cfg, logger)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		return store, nil, nil
 	case config.OCIStorageType:
 		var opts []containers.Option[oci.StoreOptions]
 		if auth := cfg.Storage.OCI.Authentication; auth != nil {
@@ -114,12 +120,12 @@ func NewStore(ctx context.Context, logger *zap.Logger, cfg *config.Config) (_ st
 
 		ocistore, err := oci.NewStore(logger, cfg.Storage.OCI.BundlesDirectory, opts...)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		ref, err := oci.ParseReference(cfg.Storage.OCI.Repository)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		snapStore, err := storageoci.NewSnapshotStore(ctx, logger, ocistore, ref,
@@ -128,13 +134,13 @@ func NewStore(ctx context.Context, logger *zap.Logger, cfg *config.Config) (_ st
 			),
 		)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
-		return storagefs.NewStore(storagefs.NewSingleReferenceStore(logger, snapStore)), nil
+		return storagefs.NewStore(storagefs.NewSingleReferenceStore(logger, snapStore)), nil, nil
 	}
 
-	return nil, fmt.Errorf("unexpected storage type: %q", cfg.Storage.Type)
+	return nil, nil, fmt.Errorf("unexpected storage type: %q", cfg.Storage.Type)
 }
 
 // newObjectStore create a new storate.Store from the object config
