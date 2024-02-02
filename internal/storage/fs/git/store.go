@@ -23,7 +23,6 @@ import (
 	"go.flipt.io/flipt/internal/gitfs"
 	"go.flipt.io/flipt/internal/storage"
 	storagefs "go.flipt.io/flipt/internal/storage/fs"
-	"go.flipt.io/flipt/rpc/flipt/manage"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
 )
@@ -251,7 +250,7 @@ func (s *SnapshotStore) buildReference(ctx context.Context, ref string) (*storag
 	return snap, hash, nil
 }
 
-func (s *SnapshotStore) Update(ctx context.Context, storeRef storage.Reference, message string, flag *manage.Flag) (string, error) {
+func (s *SnapshotStore) Update(ctx context.Context, storeRef storage.Reference, namespace, message string, fn func(*ext.Document) error) (string, error) {
 	ref := string(storeRef)
 	if ref == "" {
 		ref = s.baseRef
@@ -316,87 +315,14 @@ func (s *SnapshotStore) Update(ctx context.Context, storeRef storage.Reference, 
 	if err := storagefs.WalkDocuments(s.logger, os.DirFS(dir), func(name string, ds []*ext.Document) error {
 		// search through documents in each file looking for a matching namespaced
 		for _, doc := range ds {
-			if doc.Namespace != flag.Namespace {
+			if doc.Namespace != namespace {
 				continue
 			}
 
 			docs = ds
 			path = name
 
-			newFlag := &ext.Flag{
-				Type:        flag.Type.String(),
-				Key:         flag.Key,
-				Name:        flag.Name,
-				Description: flag.Description,
-				Enabled:     flag.Enabled,
-			}
-
-			for _, variant := range flag.Variants {
-				newFlag.Variants = append(newFlag.Variants, &ext.Variant{
-					Key:         variant.Key,
-					Name:        variant.Name,
-					Description: variant.Description,
-					Attachment:  variant.Attachment,
-				})
-			}
-
-			for i, rule := range flag.Rules {
-				newRule := &ext.Rule{
-					Rank: uint(i + 1),
-					Segment: &ext.SegmentEmbed{
-						IsSegment: &ext.Segments{
-							Keys:            rule.Segments,
-							SegmentOperator: rule.SegmentOperator.String(),
-						},
-					},
-				}
-
-				for _, dist := range rule.Distributions {
-					newRule.Distributions = append(newRule.Distributions, &ext.Distribution{
-						Rollout:    dist.Rollout,
-						VariantKey: dist.Variant,
-					})
-				}
-
-				newFlag.Rules = append(newFlag.Rules, newRule)
-			}
-
-			for _, rollout := range flag.Rollouts {
-				newRollout := &ext.Rollout{
-					Description: rollout.Description,
-				}
-
-				if segment := rollout.GetSegment(); segment != nil {
-					newRollout.Segment = &ext.SegmentRule{
-						Keys:     segment.Segments,
-						Operator: segment.SegmentOperator.String(),
-						Value:    segment.Value,
-					}
-				}
-
-				if threshold := rollout.GetThreshold(); threshold != nil {
-					newRollout.Threshold = &ext.ThresholdRule{
-						Percentage: threshold.Percentage,
-						Value:      threshold.Value,
-					}
-				}
-
-				newFlag.Rollouts = append(newFlag.Rollouts, newRollout)
-			}
-
-			var found bool
-			for i, f := range doc.Flags {
-				if found = f.Key == flag.Key; found {
-					doc.Flags[i] = newFlag
-					break
-				}
-			}
-
-			if !found {
-				doc.Flags = append(doc.Flags, newFlag)
-			}
-
-			return nil
+			return fn(doc)
 		}
 
 		return nil
@@ -405,12 +331,12 @@ func (s *SnapshotStore) Update(ctx context.Context, storeRef storage.Reference, 
 	}
 
 	if path == "" {
-		return "", fmt.Errorf("namespace %q: not found", flag.Namespace)
+		return "", fmt.Errorf("namespace %q: not found", namespace)
 	}
 
 	fi, err := work.Filesystem.OpenFile(path, os.O_RDWR|os.O_TRUNC, 0644)
 	if err != nil {
-		return "", fmt.Errorf("namespace %q: %w", flag.Namespace, err)
+		return "", fmt.Errorf("namespace %q: %w", namespace, err)
 	}
 
 	var encode func(any) error
