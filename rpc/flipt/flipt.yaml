@@ -318,7 +318,7 @@ http:
 
   # management routes
   - selector: flipt.manage.ManageService.GetNamespace
-    get: /manage/c1/namespaces/{key}
+    get: /manage/v1/namespaces/{key}
 
   - selector: flipt.manage.ManageService.PutFlag
     put: /manage/v1/namespaces/{namespace}/flags/{key}

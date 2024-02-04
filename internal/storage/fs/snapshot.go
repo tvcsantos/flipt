@@ -19,6 +19,7 @@ import (
 	"go.flipt.io/flipt/internal/ext"
 	"go.flipt.io/flipt/internal/storage"
 	"go.flipt.io/flipt/rpc/flipt"
+	"go.flipt.io/flipt/rpc/flipt/manage"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/yaml.v3"
@@ -33,9 +34,10 @@ var _ storage.ReadOnlyStore = (*Snapshot)(nil)
 // Snapshot contains the structures necessary for serving
 // flag state to a client.
 type Snapshot struct {
-	ns        map[string]*namespace
-	evalDists map[string][]*storage.EvaluationDistribution
-	now       *timestamppb.Timestamp
+	Namespaces map[string]*manage.Namespace
+	ns         map[string]*namespace
+	evalDists  map[string][]*storage.EvaluationDistribution
+	now        *timestamppb.Timestamp
 }
 
 type namespace struct {
@@ -110,6 +112,7 @@ func SnapshotFromPaths(logger *zap.Logger, ffs fs.FS, paths []string, opts ...co
 func SnapshotFromFiles(logger *zap.Logger, files []fs.File, opts ...containers.Option[SnapshotOption]) (*Snapshot, error) {
 	now := flipt.Now()
 	s := Snapshot{
+		Namespaces: map[string]*manage.Namespace{},
 		ns: map[string]*namespace{
 			defaultNs: newNamespace("default", "Default", now),
 		},
@@ -265,12 +268,19 @@ func (ss *Snapshot) addDoc(doc *ext.Document) error {
 		ns = newNamespace(doc.Namespace, doc.Namespace, ss.now)
 	}
 
+	mNS := &manage.Namespace{
+		Key: doc.Namespace,
+	}
+
+	ss.Namespaces[doc.Namespace] = mNS
+
 	evalDists := map[string][]*storage.EvaluationDistribution{}
 	if len(ss.evalDists) > 0 {
 		evalDists = ss.evalDists
 	}
 
 	for _, s := range doc.Segments {
+		// update evaluation snapshot data
 		matchType := flipt.MatchType_value[s.MatchType]
 		segment := &flipt.Segment{
 			NamespaceKey: doc.Namespace,
@@ -282,8 +292,19 @@ func (ss *Snapshot) addDoc(doc *ext.Document) error {
 			UpdatedAt:    ss.now,
 		}
 
+		mSegment := &manage.Segment{
+			Namespace:   doc.Namespace,
+			Name:        s.Name,
+			Key:         s.Key,
+			Description: s.Description,
+			MatchType:   manage.MatchType(matchType),
+			CreatedAt:   ss.now,
+			UpdatedAt:   ss.now,
+		}
+
 		for _, constraint := range s.Constraints {
 			constraintType := flipt.ComparisonType_value[constraint.Type]
+
 			segment.Constraints = append(segment.Constraints, &flipt.Constraint{
 				NamespaceKey: doc.Namespace,
 				SegmentKey:   segment.Key,
@@ -296,9 +317,20 @@ func (ss *Snapshot) addDoc(doc *ext.Document) error {
 				CreatedAt:    ss.now,
 				UpdatedAt:    ss.now,
 			})
+
+			mSegment.Constraints = append(mSegment.Constraints, &manage.Constraint{
+				Operator:    constraint.Operator,
+				Property:    constraint.Property,
+				Type:        manage.ComparisonType(constraintType),
+				Value:       constraint.Value,
+				Description: constraint.Description,
+				CreatedAt:   ss.now,
+				UpdatedAt:   ss.now,
+			})
 		}
 
 		ns.segments[segment.Key] = segment
+		mNS.Segments = append(mNS.Segments, mSegment)
 	}
 
 	for _, f := range doc.Flags {
@@ -312,6 +344,17 @@ func (ss *Snapshot) addDoc(doc *ext.Document) error {
 			Type:         flipt.FlagType(flagType),
 			CreatedAt:    ss.now,
 			UpdatedAt:    ss.now,
+		}
+
+		mFlag := &manage.Flag{
+			Namespace:   doc.Namespace,
+			Key:         f.Key,
+			Name:        f.Name,
+			Description: f.Description,
+			Enabled:     f.Enabled,
+			Type:        manage.FlagType(flagType),
+			CreatedAt:   ss.now,
+			UpdatedAt:   ss.now,
 		}
 
 		for _, v := range f.Variants {
@@ -330,9 +373,19 @@ func (ss *Snapshot) addDoc(doc *ext.Document) error {
 				CreatedAt:    ss.now,
 				UpdatedAt:    ss.now,
 			})
+
+			mFlag.Variants = append(mFlag.Variants, &manage.Variant{
+				Key:         v.Key,
+				Name:        v.Name,
+				Description: v.Description,
+				Attachment:  string(attachment),
+				CreatedAt:   ss.now,
+				UpdatedAt:   ss.now,
+			})
 		}
 
 		ns.flags[f.Key] = flag
+		mNS.Flags = append(mNS.Flags, mFlag)
 
 		evalRules := []*storage.EvaluationRule{}
 		for i, r := range f.Rules {
@@ -353,14 +406,24 @@ func (ss *Snapshot) addDoc(doc *ext.Document) error {
 				Rank:         rank,
 			}
 
+			mRule := &manage.Rule{
+				CreatedAt: ss.now,
+				UpdatedAt: ss.now,
+			}
+
 			switch s := r.Segment.IsSegment.(type) {
 			case ext.SegmentKey:
 				rule.SegmentKey = string(s)
+
+				mRule.Segments = []string{string(s)}
 			case *ext.Segments:
 				rule.SegmentKeys = s.Keys
 				segmentOperator := flipt.SegmentOperator_value[s.SegmentOperator]
 
 				rule.SegmentOperator = flipt.SegmentOperator(segmentOperator)
+
+				mRule.Segments = s.Keys
+				mRule.SegmentOperator = manage.SegmentOperator(manage.SegmentOperator_value[s.SegmentOperator])
 			}
 
 			var (
@@ -428,9 +491,17 @@ func (ss *Snapshot) addDoc(doc *ext.Document) error {
 					VariantKey:        variant.Key,
 					VariantAttachment: variant.Attachment,
 				})
+
+				mRule.Distributions = append(mRule.Distributions, &manage.Distribution{
+					Variant:   d.VariantKey,
+					Rollout:   d.Rollout,
+					CreatedAt: ss.now,
+					UpdatedAt: ss.now,
+				})
 			}
 
 			ns.rules[rule.Id] = rule
+			mFlag.Rules = append(mFlag.Rules, mRule)
 		}
 
 		ns.evalRules[f.Key] = evalRules
@@ -452,6 +523,12 @@ func (ss *Snapshot) addDoc(doc *ext.Document) error {
 				UpdatedAt:    ss.now,
 			}
 
+			mRollout := &manage.Rollout{
+				Rank:      rank,
+				CreatedAt: ss.now,
+				UpdatedAt: ss.now,
+			}
+
 			if rollout.Threshold != nil {
 				s.Threshold = &storage.RolloutThreshold{
 					Percentage: rollout.Threshold.Percentage,
@@ -462,6 +539,14 @@ func (ss *Snapshot) addDoc(doc *ext.Document) error {
 				flagRollout.Type = s.RolloutType
 				flagRollout.Rule = &flipt.Rollout_Threshold{
 					Threshold: &flipt.RolloutThreshold{
+						Percentage: rollout.Threshold.Percentage,
+						Value:      rollout.Threshold.Value,
+					},
+				}
+
+				mRollout.Type = manage.RolloutType_THRESHOLD_ROLLOUT_TYPE
+				mRollout.Rule = &manage.Rollout_Threshold{
+					Threshold: &manage.RolloutThreshold{
 						Percentage: rollout.Threshold.Percentage,
 						Value:      rollout.Threshold.Value,
 					},
@@ -526,9 +611,19 @@ func (ss *Snapshot) addDoc(doc *ext.Document) error {
 				flagRollout.Rule = &flipt.Rollout_Segment{
 					Segment: frs,
 				}
+
+				mRollout.Type = manage.RolloutType_SEGMENT_ROLLOUT_TYPE
+				mRollout.Rule = &manage.Rollout_Segment{
+					Segment: &manage.RolloutSegment{
+						SegmentOperator: manage.SegmentOperator(manage.SegmentOperator_value[rollout.Segment.Operator]),
+						Segments:        segmentKeys,
+						Value:           rollout.Segment.Value,
+					},
+				}
 			}
 
 			ns.rollouts[flagRollout.Id] = flagRollout
+			mFlag.Rollouts = append(mFlag.Rollouts, mRollout)
 
 			evalRollouts = append(evalRollouts, s)
 		}
@@ -545,6 +640,15 @@ func (ss *Snapshot) addDoc(doc *ext.Document) error {
 
 func (ss Snapshot) String() string {
 	return "snapshot"
+}
+
+func (ss *Snapshot) Namespace(ctx context.Context, key string) (*manage.Namespace, error) {
+	ns, ok := ss.Namespaces[key]
+	if !ok {
+		return nil, errs.ErrNotFoundf("namespace %q", key)
+	}
+
+	return ns, nil
 }
 
 func (ss *Snapshot) GetRule(ctx context.Context, p storage.NamespaceRequest, id string) (rule *flipt.Rule, _ error) {

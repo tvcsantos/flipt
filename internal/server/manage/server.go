@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"go.flipt.io/flipt/errors"
 	"go.flipt.io/flipt/internal/ext"
 	"go.flipt.io/flipt/internal/storage"
 	"go.flipt.io/flipt/rpc/flipt/manage"
@@ -12,6 +13,7 @@ import (
 )
 
 type Store interface {
+	View(ctx context.Context, storeRef storage.Reference, fn func(storage.ReadOnlyStore) error) error
 	Update(ctx context.Context, ref storage.Reference, namespace, message string, fn func(*ext.Document) error) (string, error)
 }
 
@@ -32,14 +34,44 @@ func (s *Server) RegisterGRPC(server *grpc.Server) {
 	manage.RegisterManageServiceServer(server, s)
 }
 
-func (s *Server) GetNamespace(_ context.Context, _ *manage.GetNamespaceRequest) (*manage.Namespace, error) {
-	panic("not implemented") // TODO: Implement
+type ReadOnlyNamespaceStore interface {
+	storage.ReadOnlyStore
+	Namespace(context.Context, string) (*manage.Namespace, error)
 }
 
-func (s *Server) PutFlag(ctx context.Context, flag *manage.Flag) (*manage.Proposal, error) {
-	branch, err := s.store.Update(
+func (s *Server) GetNamespace(ctx context.Context, req *manage.GetNamespaceRequest) (ns *manage.Namespace, err error) {
+	if err := s.store.View(ctx, storage.Reference(req.Reference), func(ros storage.ReadOnlyStore) error {
+		if store, ok := ros.(ReadOnlyNamespaceStore); ok {
+			ns, err = store.Namespace(ctx, req.Key)
+			return err
+		}
+
+		s.logger.Debug("not a namespace store")
+
+		return errors.ErrNotFoundf("namespace %q", req.Key)
+	}); err != nil {
+		return nil, err
+	}
+
+	return
+}
+
+func (s *Server) PutFlag(ctx context.Context, req *manage.PutFlagRequest) (*manage.PutFlagResponse, error) {
+	flag := req.Flag
+	if flag.Namespace == "" {
+		flag.Namespace = req.Namespace
+	}
+	if flag.Key == "" {
+		flag.Key = req.Key
+	}
+
+	if req.Namespace != flag.Namespace || req.Key != flag.Key {
+		return nil, fmt.Errorf("namespace and flag key must be defined")
+	}
+
+	reference, err := s.store.Update(
 		ctx,
-		storage.Reference(""),
+		storage.Reference(req.Reference),
 		flag.Namespace,
 		fmt.Sprintf("feat: put flag %s/%s", flag.Namespace, flag.Key),
 		func(doc *ext.Document) error {
@@ -126,13 +158,29 @@ func (s *Server) PutFlag(ctx context.Context, flag *manage.Flag) (*manage.Propos
 		return nil, err
 	}
 
-	return &manage.Proposal{Id: branch}, nil
+	s.logger.Debug("Reference updated", zap.String("reference", reference))
+
+	return &manage.PutFlagResponse{
+		Reference: reference,
+	}, nil
 }
 
-func (s *Server) PutSegment(ctx context.Context, segment *manage.Segment) (*manage.Proposal, error) {
-	branch, err := s.store.Update(
+func (s *Server) PutSegment(ctx context.Context, req *manage.PutSegmentRequest) (*manage.PutSegmentResponse, error) {
+	segment := req.Segment
+	if segment.Namespace == "" {
+		segment.Namespace = req.Namespace
+	}
+	if segment.Key == "" {
+		segment.Key = req.Key
+	}
+
+	if req.Namespace != segment.Namespace || req.Key != segment.Key {
+		return nil, fmt.Errorf("namespace and segment key must be defined")
+	}
+
+	reference, err := s.store.Update(
 		ctx,
-		storage.Reference(""),
+		storage.Reference(req.Reference),
 		segment.Namespace,
 		fmt.Sprintf("feat: put segment %s/%s", segment.Namespace, segment.Key),
 		func(doc *ext.Document) error {
@@ -174,5 +222,9 @@ func (s *Server) PutSegment(ctx context.Context, segment *manage.Segment) (*mana
 		return nil, err
 	}
 
-	return &manage.Proposal{Id: branch}, nil
+	s.logger.Debug("Reference updated", zap.String("reference", reference))
+
+	return &manage.PutSegmentResponse{
+		Reference: reference,
+	}, nil
 }

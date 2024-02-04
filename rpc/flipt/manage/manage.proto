@@ -130,11 +130,33 @@ message Constraint {
 }
 
 message Proposal {
-    string id = 1;
+  string id = 1;
+}
+
+message PutFlagRequest {
+  string namespace = 1;
+  string key = 2;
+  Flag flag = 3;
+  string reference = 4;
+}
+
+message PutFlagResponse {
+  string reference = 1;
+}
+
+message PutSegmentRequest {
+  string namespace = 1;
+  string key = 2;
+  Segment segment = 3;
+  string reference = 4;
+}
+
+message PutSegmentResponse {
+  string reference = 1;
 }
 
 service ManageService {
   rpc GetNamespace(GetNamespaceRequest) returns (Namespace) {}
-  rpc PutFlag(Flag) returns (Proposal) {}
-  rpc PutSegment(Segment) returns (Proposal) {}
+  rpc PutFlag(PutFlagRequest) returns (PutFlagResponse) {}
+  rpc PutSegment(PutSegmentRequest) returns (PutSegmentResponse) {}
 }

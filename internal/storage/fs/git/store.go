@@ -129,7 +129,7 @@ func NewSnapshotStore(ctx context.Context, logger *zap.Logger, url string, opts 
 	}
 
 	// do an initial fetch to setup remote tracking branches
-	if _, err := store.fetch(ctx); err != nil {
+	if err := store.fetch(ctx); err != nil {
 		return nil, err
 	}
 
@@ -174,7 +174,7 @@ func (s *SnapshotStore) View(ctx context.Context, storeRef storage.Reference, fn
 	}
 
 	// force attempt a fetch to get the latest references
-	if _, err := s.fetch(ctx); err != nil {
+	if err := s.fetch(ctx); err != nil {
 		return err
 	}
 
@@ -194,10 +194,10 @@ func (s *SnapshotStore) View(ctx context.Context, storeRef storage.Reference, fn
 // update fetches from the remote and given that a the target reference
 // HEAD updates to a new revision, it builds a snapshot and updates it
 // on the store.
-func (s *SnapshotStore) update(ctx context.Context) (bool, error) {
-	if updated, err := s.fetch(ctx); !(err == nil && updated) {
+func (s *SnapshotStore) update(ctx context.Context) (updated bool, _ error) {
+	if err := s.fetch(ctx); err != nil {
 		// either nothing updated or err != nil
-		return updated, err
+		return false, err
 	}
 
 	var errs []error
@@ -208,15 +208,19 @@ func (s *SnapshotStore) update(ctx context.Context) (bool, error) {
 			continue
 		}
 
-		if _, err := s.snaps.AddOrBuild(ctx, ref, hash, s.buildSnapshot); err != nil {
+		fn := func(ctx context.Context, hash plumbing.Hash) (*storagefs.Snapshot, error) {
+			updated = true
+			return s.buildSnapshot(ctx, hash)
+		}
+		if _, err := s.snaps.AddOrBuild(ctx, ref, hash, fn); err != nil {
 			errs = append(errs, err)
 		}
 	}
 
-	return true, errors.Join(errs...)
+	return updated, errors.Join(errs...)
 }
 
-func (s *SnapshotStore) fetch(ctx context.Context) (bool, error) {
+func (s *SnapshotStore) fetch(ctx context.Context) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -225,15 +229,11 @@ func (s *SnapshotStore) fetch(ctx context.Context) (bool, error) {
 		RefSpecs: []config.RefSpec{
 			"+refs/heads/*:refs/heads/*",
 		},
-	}); err != nil {
-		if !errors.Is(err, git.NoErrAlreadyUpToDate) {
-			return false, err
-		}
-
-		return false, nil
+	}); err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
+		return err
 	}
 
-	return true, nil
+	return nil
 }
 
 func (s *SnapshotStore) buildReference(ctx context.Context, ref string) (*storagefs.Snapshot, plumbing.Hash, error) {
@@ -251,14 +251,34 @@ func (s *SnapshotStore) buildReference(ctx context.Context, ref string) (*storag
 }
 
 func (s *SnapshotStore) Update(ctx context.Context, storeRef storage.Reference, namespace, message string, fn func(*ext.Document) error) (string, error) {
-	ref := string(storeRef)
+	var (
+		create   bool
+		ref      = string(storeRef)
+		resolved = ref
+	)
+
 	if ref == "" {
-		ref = s.baseRef
+		// if the supplied reference is empty we will attempt
+		// to create a random one based on the base reference
+		create = true
+		ref = fmt.Sprintf("flipt/%s", uuid.Must(uuid.NewV4()))
+		resolved = s.baseRef
 	}
 
-	hash, err := s.resolve(ref)
+	hash, err := s.resolve(resolved)
 	if err != nil {
-		return "", err
+		// return error if it was the base reference
+		if resolved == s.baseRef {
+			return "", err
+		}
+
+		// otherwise, attempt to create a new reference
+		// using the one supplied
+		s.logger.Debug("error attempting to resolve reference",
+			zap.String("reference", resolved),
+			zap.Error(err))
+
+		create = true
 	}
 
 	// shallow copy the store without the existing index
@@ -270,7 +290,7 @@ func (s *SnapshotStore) Update(ctx context.Context, storeRef storage.Reference, 
 		ModuleStorage:    s.storage.ModuleStorage,
 	}
 
-	dir, err := os.MkdirTemp("", "flipt-proposal-*")
+	dir, err := os.MkdirTemp("", "flipt-update-*")
 	if err != nil {
 		return "", err
 	}
@@ -290,21 +310,28 @@ func (s *SnapshotStore) Update(ctx context.Context, storeRef storage.Reference, 
 		return "", fmt.Errorf("open worktree: %w", err)
 	}
 
-	// create proposal branch (flipt/proposal/$id)
-	branch := fmt.Sprintf("flipt/proposal/%s", uuid.Must(uuid.NewV4()))
-	if err := repo.CreateBranch(&config.Branch{
-		Name:   branch,
-		Remote: "origin",
-	}); err != nil {
-		return "", fmt.Errorf("create branch: %w", err)
-	}
+	// create branch if reference is not known
+	if create {
+		if err := repo.CreateBranch(&config.Branch{
+			Name:   ref,
+			Remote: "origin",
+		}); err != nil {
+			return "", fmt.Errorf("create branch: %w", err)
+		}
 
-	if err := work.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName(branch),
-		Create: true,
-		Hash:   hash,
-	}); err != nil {
-		return "", fmt.Errorf("checkout branch: %w", err)
+		if err := work.Checkout(&git.CheckoutOptions{
+			Branch: plumbing.NewBranchReferenceName(ref),
+			Create: true,
+			Hash:   hash,
+		}); err != nil {
+			return "", fmt.Errorf("checkout branch: %w", err)
+		}
+	} else {
+		if err := work.Checkout(&git.CheckoutOptions{
+			Branch: plumbing.NewBranchReferenceName(ref),
+		}); err != nil {
+			return "", fmt.Errorf("checkout branch: %w", err)
+		}
 	}
 
 	var (
@@ -404,27 +431,21 @@ func (s *SnapshotStore) Update(ctx context.Context, storeRef storage.Reference, 
 		return "", fmt.Errorf("committing changes: %w", err)
 	}
 
-	s.logger.Debug("Pushing Changes", zap.String("branch", branch))
-
-	b, err := repo.Branch(branch)
-	if err != nil {
-		return "", err
-	}
-	s.logger.Debug("Branch", zap.String("name", b.Name), zap.String("remote", b.Remote))
+	s.logger.Debug("Pushing Changes", zap.String("reference", ref))
 
 	// push to proposed branch
 	if err := repo.PushContext(ctx, &git.PushOptions{
 		Auth:       s.auth,
 		RemoteName: "origin",
 		RefSpecs: []config.RefSpec{
-			config.RefSpec(fmt.Sprintf("%s:refs/heads/%s", branch, branch)),
-			config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/heads/%s", branch, branch)),
+			config.RefSpec(fmt.Sprintf("%s:refs/heads/%s", ref, ref)),
+			config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/heads/%s", ref, ref)),
 		},
 	}); err != nil {
 		return "", fmt.Errorf("pushing changes: %w", err)
 	}
 
-	return branch, nil
+	return ref, nil
 }
 
 func (s *SnapshotStore) resolve(ref string) (plumbing.Hash, error) {

@@ -23,7 +23,7 @@ func (x *ManageServiceClient) GetNamespace(ctx context.Context, v *manage.GetNam
 	var body io.Reader
 	values := url.Values{}
 	values.Set("reference", v.Reference)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, x.addr+fmt.Sprintf("/manage/c1/namespaces/%v", v.Key), body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, x.addr+fmt.Sprintf("/manage/v1/namespaces/%v", v.Key), body)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (x *ManageServiceClient) GetNamespace(ctx context.Context, v *manage.GetNam
 	return &output, nil
 }
 
-func (x *ManageServiceClient) PutFlag(ctx context.Context, v *manage.Flag, _ ...grpc.CallOption) (*manage.Proposal, error) {
+func (x *ManageServiceClient) PutFlag(ctx context.Context, v *manage.PutFlagRequest, _ ...grpc.CallOption) (*manage.PutFlagResponse, error) {
 	var body io.Reader
 	var values url.Values
 	reqData, err := protojson.Marshal(v)
@@ -65,7 +65,7 @@ func (x *ManageServiceClient) PutFlag(ctx context.Context, v *manage.Flag, _ ...
 		return nil, err
 	}
 	defer resp.Body.Close()
-	var output manage.Proposal
+	var output manage.PutFlagResponse
 	respData, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -79,7 +79,7 @@ func (x *ManageServiceClient) PutFlag(ctx context.Context, v *manage.Flag, _ ...
 	return &output, nil
 }
 
-func (x *ManageServiceClient) PutSegment(ctx context.Context, v *manage.Segment, _ ...grpc.CallOption) (*manage.Proposal, error) {
+func (x *ManageServiceClient) PutSegment(ctx context.Context, v *manage.PutSegmentRequest, _ ...grpc.CallOption) (*manage.PutSegmentResponse, error) {
 	var body io.Reader
 	var values url.Values
 	reqData, err := protojson.Marshal(v)
@@ -97,7 +97,7 @@ func (x *ManageServiceClient) PutSegment(ctx context.Context, v *manage.Segment,
 		return nil, err
 	}
 	defer resp.Body.Close()
-	var output manage.Proposal
+	var output manage.PutSegmentResponse
 	respData, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err

@@ -20,7 +20,7 @@ func (x *Manage) GetNamespace(ctx context.Context, v *manage.GetNamespaceRequest
 	return x.transport.GetNamespace(ctx, v)
 }
 
-func (x *Manage) PutFlag(ctx context.Context, v *manage.Flag) (*manage.Proposal, error) {
+func (x *Manage) PutFlag(ctx context.Context, v *manage.PutFlagRequest) (*manage.PutFlagResponse, error) {
 	ctx, err := authenticate(ctx, x.authenticationProvider)
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func (x *Manage) PutFlag(ctx context.Context, v *manage.Flag) (*manage.Proposal,
 	return x.transport.PutFlag(ctx, v)
 }
 
-func (x *Manage) PutSegment(ctx context.Context, v *manage.Segment) (*manage.Proposal, error) {
+func (x *Manage) PutSegment(ctx context.Context, v *manage.PutSegmentRequest) (*manage.PutSegmentResponse, error) {
 	ctx, err := authenticate(ctx, x.authenticationProvider)
 	if err != nil {
 		return nil, err

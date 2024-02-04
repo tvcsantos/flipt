@@ -102,7 +102,7 @@ func local_request_ManageService_GetNamespace_0(ctx context.Context, marshaler r
 }
 
 func request_ManageService_PutFlag_0(ctx context.Context, marshaler runtime.Marshaler, client ManageServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Flag
+	var protoReq PutFlagRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
@@ -142,7 +142,7 @@ func request_ManageService_PutFlag_0(ctx context.Context, marshaler runtime.Mars
 }
 
 func local_request_ManageService_PutFlag_0(ctx context.Context, marshaler runtime.Marshaler, server ManageServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Flag
+	var protoReq PutFlagRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
@@ -182,7 +182,7 @@ func local_request_ManageService_PutFlag_0(ctx context.Context, marshaler runtim
 }
 
 func request_ManageService_PutSegment_0(ctx context.Context, marshaler runtime.Marshaler, client ManageServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Segment
+	var protoReq PutSegmentRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
@@ -222,7 +222,7 @@ func request_ManageService_PutSegment_0(ctx context.Context, marshaler runtime.M
 }
 
 func local_request_ManageService_PutSegment_0(ctx context.Context, marshaler runtime.Marshaler, server ManageServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Segment
+	var protoReq PutSegmentRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
@@ -275,7 +275,7 @@ func RegisterManageServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/flipt.manage.ManageService/GetNamespace", runtime.WithHTTPPathPattern("/manage/c1/namespaces/{key}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/flipt.manage.ManageService/GetNamespace", runtime.WithHTTPPathPattern("/manage/v1/namespaces/{key}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -389,7 +389,7 @@ func RegisterManageServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/flipt.manage.ManageService/GetNamespace", runtime.WithHTTPPathPattern("/manage/c1/namespaces/{key}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/flipt.manage.ManageService/GetNamespace", runtime.WithHTTPPathPattern("/manage/v1/namespaces/{key}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -453,7 +453,7 @@ func RegisterManageServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 }
 
 var (
-	pattern_ManageService_GetNamespace_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"manage", "c1", "namespaces", "key"}, ""))
+	pattern_ManageService_GetNamespace_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"manage", "v1", "namespaces", "key"}, ""))
 
 	pattern_ManageService_PutFlag_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 1, 0, 4, 1, 5, 5}, []string{"manage", "v1", "namespaces", "namespace", "flags", "key"}, ""))
 

@@ -29,8 +29,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ManageServiceClient interface {
 	GetNamespace(ctx context.Context, in *GetNamespaceRequest, opts ...grpc.CallOption) (*Namespace, error)
-	PutFlag(ctx context.Context, in *Flag, opts ...grpc.CallOption) (*Proposal, error)
-	PutSegment(ctx context.Context, in *Segment, opts ...grpc.CallOption) (*Proposal, error)
+	PutFlag(ctx context.Context, in *PutFlagRequest, opts ...grpc.CallOption) (*PutFlagResponse, error)
+	PutSegment(ctx context.Context, in *PutSegmentRequest, opts ...grpc.CallOption) (*PutSegmentResponse, error)
 }
 
 type manageServiceClient struct {
@@ -50,8 +50,8 @@ func (c *manageServiceClient) GetNamespace(ctx context.Context, in *GetNamespace
 	return out, nil
 }
 
-func (c *manageServiceClient) PutFlag(ctx context.Context, in *Flag, opts ...grpc.CallOption) (*Proposal, error) {
-	out := new(Proposal)
+func (c *manageServiceClient) PutFlag(ctx context.Context, in *PutFlagRequest, opts ...grpc.CallOption) (*PutFlagResponse, error) {
+	out := new(PutFlagResponse)
 	err := c.cc.Invoke(ctx, ManageService_PutFlag_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -59,8 +59,8 @@ func (c *manageServiceClient) PutFlag(ctx context.Context, in *Flag, opts ...grp
 	return out, nil
 }
 
-func (c *manageServiceClient) PutSegment(ctx context.Context, in *Segment, opts ...grpc.CallOption) (*Proposal, error) {
-	out := new(Proposal)
+func (c *manageServiceClient) PutSegment(ctx context.Context, in *PutSegmentRequest, opts ...grpc.CallOption) (*PutSegmentResponse, error) {
+	out := new(PutSegmentResponse)
 	err := c.cc.Invoke(ctx, ManageService_PutSegment_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -73,8 +73,8 @@ func (c *manageServiceClient) PutSegment(ctx context.Context, in *Segment, opts 
 // for forward compatibility
 type ManageServiceServer interface {
 	GetNamespace(context.Context, *GetNamespaceRequest) (*Namespace, error)
-	PutFlag(context.Context, *Flag) (*Proposal, error)
-	PutSegment(context.Context, *Segment) (*Proposal, error)
+	PutFlag(context.Context, *PutFlagRequest) (*PutFlagResponse, error)
+	PutSegment(context.Context, *PutSegmentRequest) (*PutSegmentResponse, error)
 	mustEmbedUnimplementedManageServiceServer()
 }
 
@@ -85,10 +85,10 @@ type UnimplementedManageServiceServer struct {
 func (UnimplementedManageServiceServer) GetNamespace(context.Context, *GetNamespaceRequest) (*Namespace, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNamespace not implemented")
 }
-func (UnimplementedManageServiceServer) PutFlag(context.Context, *Flag) (*Proposal, error) {
+func (UnimplementedManageServiceServer) PutFlag(context.Context, *PutFlagRequest) (*PutFlagResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PutFlag not implemented")
 }
-func (UnimplementedManageServiceServer) PutSegment(context.Context, *Segment) (*Proposal, error) {
+func (UnimplementedManageServiceServer) PutSegment(context.Context, *PutSegmentRequest) (*PutSegmentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PutSegment not implemented")
 }
 func (UnimplementedManageServiceServer) mustEmbedUnimplementedManageServiceServer() {}
@@ -123,7 +123,7 @@ func _ManageService_GetNamespace_Handler(srv interface{}, ctx context.Context, d
 }
 
 func _ManageService_PutFlag_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Flag)
+	in := new(PutFlagRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -135,13 +135,13 @@ func _ManageService_PutFlag_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: ManageService_PutFlag_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ManageServiceServer).PutFlag(ctx, req.(*Flag))
+		return srv.(ManageServiceServer).PutFlag(ctx, req.(*PutFlagRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ManageService_PutSegment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Segment)
+	in := new(PutSegmentRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func _ManageService_PutSegment_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: ManageService_PutSegment_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ManageServiceServer).PutSegment(ctx, req.(*Segment))
+		return srv.(ManageServiceServer).PutSegment(ctx, req.(*PutSegmentRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
