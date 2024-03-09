@@ -18,6 +18,3 @@ CREATE TABLE IF NOT EXISTS namespace_permissions (
   
   UNIQUE (namespace_key, role_id, action),
 );
-
-
-
