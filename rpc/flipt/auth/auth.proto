@@ -130,3 +130,36 @@ service AuthenticationMethodGithubService {
   rpc AuthorizeURL(AuthorizeURLRequest) returns (AuthorizeURLResponse) {}
   rpc Callback(CallbackRequest) returns (CallbackResponse) {}
 }
+
+enum AuthorizationPolicyAction {
+  AUTHZ_ACTION_NONE = 0;
+  AUTHZ_ACTION_READ = 1;
+  AUTHZ_ACTION_WRITE = 2;
+}
+
+message AuthorizationRole {
+  string id = 1;
+  string key = 2;
+  string name = 3;
+  string description = 4;
+}
+
+message AuthorizationPolicy {
+  string id = 1;
+  string namespace_key = 2;
+  string role_key = 3;
+  AuthorizationPolicyAction action = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+message CreateAuthorizationPolicyRequest {
+  string namespace_key = 1;
+  string role_key = 2;
+  AuthorizationPolicyAction action = 3;
+}
+
+// flipt:sdk:ignore
+service AuthorizationService {
+  rpc CreatePolicy(CreateAuthorizationPolicyRequest) returns (AuthorizationPolicy) {}
+}

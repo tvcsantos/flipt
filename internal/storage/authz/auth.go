@@ -1,0 +1,19 @@
+package authz
+
+import (
+	"context"
+
+	"go.flipt.io/flipt/internal/storage"
+	"go.flipt.io/flipt/rpc/flipt/auth"
+)
+
+// Store persists Authorization policies
+type Store interface {
+	ListPolicies(context.Context, *storage.ListRequest[ListAuthorizationPoliciesPredicate]) (storage.ResultSet[*auth.AuthorizationPolicy], error)
+	CreatePolicy(context.Context, *auth.CreateAuthorizationPolicyRequest) (*auth.AuthorizationPolicy, error)
+}
+
+type ListAuthorizationPoliciesPredicate struct {
+	NamespaceKey *string
+	RoleKey      *string
+}
