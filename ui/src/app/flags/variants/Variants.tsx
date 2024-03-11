@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useDeleteVariantMutation } from '~/app/flags/flagsApi';
 import { selectReadonly } from '~/app/meta/metaSlice';
-import { selectCurrentNamespace } from '~/app/namespaces/namespacesSlice';
+import { selectCurrentNamespace } from '~/app/namespacesSlice';
 import EmptyState from '~/components/EmptyState';
 import VariantForm from '~/components/flags/VariantForm';
 import Button from '~/components/forms/buttons/Button';

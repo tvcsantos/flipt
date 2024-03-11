@@ -12,7 +12,7 @@ import { selectReadonly } from '~/app/meta/metaSlice';
 import {
   selectCurrentNamespace,
   selectNamespaces
-} from '~/app/namespaces/namespacesSlice';
+} from '~/app/namespacesSlice';
 import FlagForm from '~/components/flags/FlagForm';
 import Dropdown from '~/components/forms/Dropdown';
 import Loading from '~/components/Loading';

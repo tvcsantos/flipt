@@ -1,0 +1,65 @@
+# exported by Flipt (dev) on 2024-03-11T18:02:03Z
+
+version: "1.2"
+namespace: default
+flags:
+- key: useNewPaymentGateway
+  name: useNewPaymentGateway
+  type: BOOLEAN_FLAG_TYPE
+  description: For migration from our legacy payment gateway
+  enabled: true
+  rollouts:
+  - segment:
+      key: Internal
+      value: true
+  - description: All users
+    threshold:
+      percentage: 10
+      value: true
+- key: orderFulfillment
+  name: Order Fulfillment Location
+  type: VARIANT_FLAG_TYPE
+  enabled: true
+  variants:
+  - key: nyc-1
+    name: New York - Warehouse 1
+    description: Port
+  - key: nyc-2
+    name: New York - Warehouse 2
+    description: Manhattan
+  - key: la-1
+    name: Los Angeles
+  rules:
+  - segment: west-coast
+    distributions:
+    - variant: la-1
+      rollout: 100
+  - segment: all-users
+    distributions:
+    - variant: nyc-1
+      rollout: 50
+    - variant: nyc-2
+      rollout: 50
+    - variant: la-1
+segments:
+- key: Internal
+  name: Internal
+  description: Our own internal users
+  constraints:
+  - type: STRING_COMPARISON_TYPE
+    property: email
+    operator: suffix
+    value: '@flipt.io'
+    description: Team members
+  match_type: ANY_MATCH_TYPE
+- key: west-coast
+  name: West Coast
+  constraints:
+  - type: STRING_COMPARISON_TYPE
+    property: location
+    operator: isoneof
+    value: '["CA", "OR", "WA"]'
+  match_type: ALL_MATCH_TYPE
+- key: all-users
+  name: All users
+  match_type: ANY_MATCH_TYPE

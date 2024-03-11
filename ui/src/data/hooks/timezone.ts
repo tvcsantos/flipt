@@ -1,6 +1,6 @@
 import { addMinutes, format, parseISO } from 'date-fns';
 import { useSelector } from 'react-redux';
-import { selectTimezone } from '~/app/preferences/preferencesSlice';
+import { selectTimezone } from '~/app/settings/preferences/preferencesSlice';
 import { Timezone } from '~/types/Preferences';
 
 export const useTimezone = () => {

@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as Yup from 'yup';
 import { useListAuthProvidersQuery } from '~/app/auth/authApi';
 import { useListFlagsQuery } from '~/app/flags/flagsApi';
-import { selectCurrentNamespace } from '~/app/namespaces/namespacesSlice';
+import { selectCurrentNamespace } from '~/app/namespacesSlice';
 import { ContextEditor } from '~/components/console/ContextEditor';
 import EmptyState from '~/components/EmptyState';
 import Button from '~/components/forms/buttons/Button';

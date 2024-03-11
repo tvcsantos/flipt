@@ -144,6 +144,37 @@ message AuthorizationRole {
   string description = 4;
 }
 
+message CreateRoleRequest {
+  string key = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message GetRoleRequest {
+  string id = 1;
+}
+
+message UpdateRoleRequest {
+  string id = 1;
+  string key = 2;
+  string name = 3;
+  string description = 4;
+}
+
+message DeleteRoleRequest {
+  string id = 1;
+}
+
+message ListRolesRequest {
+  int32 limit = 1;
+  string page_token = 2;
+}
+
+message ListRolesResponse {
+  repeated AuthorizationRole roles = 1;
+  string next_page_token = 2;
+}
+
 message AuthorizationPolicy {
   string id = 1;
   string namespace_key = 2;
@@ -159,7 +190,38 @@ message CreateAuthorizationPolicyRequest {
   AuthorizationPolicyAction action = 3;
 }
 
+message GetAuthorizationPolicyRequest {
+  string id = 1;
+  string namespace_key = 2;
+}
+
+message ListAuthorizationPoliciesRequest {
+  string namespace_key = 1;
+  string role_key = 2;
+  int32 limit = 3;
+  string page_token = 4;
+}
+
+message ListAuthorizationPoliciesResponse {
+  repeated AuthorizationPolicy policies = 1;
+  string next_page_token = 2;
+}
+
+message DeleteAuthorizationPolicyRequest {
+  string id = 1;
+  string namespace_key = 2;
+}
+
 // flipt:sdk:ignore
 service AuthorizationService {
-  rpc CreatePolicy(CreateAuthorizationPolicyRequest) returns (AuthorizationPolicy) {}
+  rpc CreateRole(CreateRoleRequest) returns (AuthorizationRole) {}
+  rpc GetRole(GetRoleRequest) returns (AuthorizationRole) {}
+  rpc UpdateRole(UpdateRoleRequest) returns (AuthorizationRole) {}
+  rpc DeleteRole(DeleteRoleRequest) returns (google.protobuf.Empty) {}
+  rpc ListRoles(ListRolesRequest) returns (ListRolesResponse) {}
+
+  rpc CreateNamespacePolicy(CreateAuthorizationPolicyRequest) returns (AuthorizationPolicy) {}
+  rpc GetNamespacePolicy(GetAuthorizationPolicyRequest) returns (AuthorizationPolicy) {}
+  rpc DeleteNamespacePolicy(DeleteAuthorizationPolicyRequest) returns (google.protobuf.Empty) {}
+  rpc ListNamespacePolicies(ListAuthorizationPoliciesRequest) returns (ListAuthorizationPoliciesResponse) {}
 }

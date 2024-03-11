@@ -12,6 +12,10 @@ export default function Settings() {
       to: '/settings/namespaces'
     },
     {
+      name: 'Permissions',
+      to: '/settings/permissions'
+    },
+    {
       name: 'API Tokens',
       to: '/settings/tokens'
     }

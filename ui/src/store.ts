@@ -9,7 +9,7 @@ import {
   namespaceApi,
   namespaceKey,
   namespacesSlice
-} from '~/app/namespaces/namespacesSlice';
+} from '~/app/namespacesSlice';
 import { analyticsApi } from './app/flags/analyticsApi';
 import { flagsApi } from './app/flags/flagsApi';
 import { rolloutTag, rolloutsApi } from './app/flags/rolloutsApi';
@@ -18,9 +18,9 @@ import { metaSlice } from './app/meta/metaSlice';
 import {
   preferencesKey,
   preferencesSlice
-} from './app/preferences/preferencesSlice';
+} from './app/settings/preferences/preferencesSlice';
 import { segmentTag, segmentsApi } from './app/segments/segmentsApi';
-import { tokensApi } from './app/tokens/tokensApi';
+import { tokensApi } from './app/settings/tokens/tokensApi';
 import { LoadingStatus } from './types/Meta';
 import { refsKey, refsSlice } from './app/refs/refsSlice';
 import { eventSlice, eventKey } from './app/events/eventSlice';

@@ -10,7 +10,7 @@ import Flag from './app/flags/Flag';
 import NewFlag from './app/flags/NewFlag';
 import Layout from './app/Layout';
 import NotFoundLayout from './app/NotFoundLayout';
-import { selectTheme } from './app/preferences/preferencesSlice';
+import { selectTheme } from './app/settings/preferences/preferencesSlice';
 import NewSegment from './app/segments/NewSegment';
 import Segment from './app/segments/Segment';
 import SessionProvider from './components/SessionProvider';
@@ -25,12 +25,19 @@ const Analytics = loadable(() => import('./app/flags/analytics/Analytics'));
 const Segments = loadable(() => import('./app/segments/Segments'));
 const Console = loadable(() => import('./app/console/Console'));
 const Login = loadable(() => import('./app/auth/Login'));
-const Settings = loadable(() => import('./app/Settings'));
+const Settings = loadable(() => import('./app/settings/Settings'));
 const Onboarding = loadable(() => import('./app/Onboarding'));
 const Support = loadable(() => import('./app/Support'));
-const Preferences = loadable(() => import('./app/preferences/Preferences'));
-const Namespaces = loadable(() => import('./app/namespaces/Namespaces'));
-const Tokens = loadable(() => import('./app/tokens/Tokens'));
+const Preferences = loadable(
+  () => import('./app/settings/preferences/Preferences')
+);
+const Namespaces = loadable(
+  () => import('./app/settings/namespaces/Namespaces')
+);
+const Permissions = loadable(
+  () => import('./app/settings/permissions/Permissions')
+);
+const Tokens = loadable(() => import('./app/settings/tokens/Tokens'));
 
 if (typeof window !== 'undefined') {
   formbricks.init({
@@ -131,6 +138,10 @@ const router = createHashRouter([
           {
             path: 'namespaces',
             element: <Namespaces />
+          },
+          {
+            path: 'permissions',
+            element: <Permissions />
           },
           {
             path: 'tokens',

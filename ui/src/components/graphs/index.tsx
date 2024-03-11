@@ -13,7 +13,7 @@ import {
 import { useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { useSelector } from 'react-redux';
-import { selectTimezone } from '~/app/preferences/preferencesSlice';
+import { selectTimezone } from '~/app/settings/preferences/preferencesSlice';
 import { useTimezone } from '~/data/hooks/timezone';
 import { Timezone } from '~/types/Preferences';
 

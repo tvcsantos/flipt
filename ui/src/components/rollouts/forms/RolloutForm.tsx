@@ -4,10 +4,10 @@ import { FieldArray, Form, Formik } from 'formik';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useCreateRolloutMutation } from '~/app/flags/rolloutsApi';
-import { selectCurrentNamespace } from '~/app/namespaces/namespacesSlice';
+import { selectCurrentNamespace } from '~/app/namespacesSlice';
 import Button from '~/components/forms/buttons/Button';
 import Input from '~/components/forms/Input';
-import SegmentsPicker from '~/components/forms/SegmentsPicker';
+import SegmentsPicker from '~/components/segments/forms/SegmentsPicker';
 import Select from '~/components/forms/Select';
 import Loading from '~/components/Loading';
 import MoreInfo from '~/components/MoreInfo';
@@ -61,6 +61,7 @@ export default function RolloutForm(props: RolloutFormProps) {
 
   const [rolloutRuleType, setRolloutRuleType] = useState(RolloutType.THRESHOLD);
   const [createRollout] = useCreateRolloutMutation();
+
   const handleSegmentSubmit = (values: RolloutFormValues) => {
     return createRollout({
       namespaceKey: namespace.key,

@@ -7,7 +7,7 @@ import (
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
-	clickhouseMigrate "github.com/golang-migrate/migrate/v4/database/clickhouse"
+	"github.com/golang-migrate/migrate/v4/database/clickhouse"
 	"github.com/golang-migrate/migrate/v4/database/cockroachdb"
 	"github.com/golang-migrate/migrate/v4/database/mysql"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -19,8 +19,8 @@ import (
 )
 
 var expectedVersions = map[Driver]uint{
-	SQLite:      11,
-	LibSQL:      11, // libsql driver uses the same migrations as sqlite3
+	SQLite:      12,
+	LibSQL:      12, // libsql driver uses the same migrations as sqlite3
 	Postgres:    12,
 	MySQL:       11,
 	CockroachDB: 9,
@@ -102,7 +102,7 @@ func NewAnalyticsMigrator(cfg config.Config, logger *zap.Logger) (*Migrator, err
 			return nil, err
 		}
 
-		dr, err = clickhouseMigrate.WithInstance(sql, &clickhouseMigrate.Config{
+		dr, err = clickhouse.WithInstance(sql, &clickhouse.Config{
 			DatabaseName:          options.Auth.Database,
 			MigrationsTableEngine: "MergeTree",
 		})

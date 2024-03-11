@@ -9,8 +9,9 @@ import (
 
 // Store persists Authorization policies
 type Store interface {
-	ListPolicies(context.Context, *storage.ListRequest[ListAuthorizationPoliciesPredicate]) (storage.ResultSet[*auth.AuthorizationPolicy], error)
-	CreatePolicy(context.Context, *auth.CreateAuthorizationPolicyRequest) (*auth.AuthorizationPolicy, error)
+	ListNamespacePolicies(context.Context, *storage.ListRequest[ListAuthorizationPoliciesPredicate]) (storage.ResultSet[*auth.AuthorizationPolicy], error)
+	CreateNamespacePolicy(context.Context, *auth.CreateAuthorizationPolicyRequest) (*auth.AuthorizationPolicy, error)
+	DeleteNamespacePolicy(context.Context, *auth.DeleteAuthorizationPolicyRequest) error
 }
 
 type ListAuthorizationPoliciesPredicate struct {

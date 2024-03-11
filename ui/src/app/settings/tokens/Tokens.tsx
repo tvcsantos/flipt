@@ -4,7 +4,7 @@ import { useListAuthProvidersQuery } from '~/app/auth/authApi';
 import {
   useDeleteTokensMutation,
   useListTokensQuery
-} from '~/app/tokens/tokensApi';
+} from '~/app/settings/tokens/tokensApi';
 import EmptyState from '~/components/EmptyState';
 import Button from '~/components/forms/buttons/Button';
 import Loading from '~/components/Loading';

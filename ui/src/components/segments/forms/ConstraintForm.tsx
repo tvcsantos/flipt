@@ -7,8 +7,8 @@ import { forwardRef, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import * as Yup from 'yup';
-import { selectCurrentNamespace } from '~/app/namespaces/namespacesSlice';
-import { selectTimezone } from '~/app/preferences/preferencesSlice';
+import { selectCurrentNamespace } from '~/app/namespacesSlice';
+import { selectTimezone } from '~/app/settings/preferences/preferencesSlice';
 import {
   useCreateConstraintMutation,
   useUpdateConstraintMutation

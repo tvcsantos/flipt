@@ -8,8 +8,8 @@ import {
   currentNamespaceChanged,
   selectCurrentNamespace,
   selectNamespaces
-} from '~/app/namespaces/namespacesSlice';
-import { themeChanged } from '~/app/preferences/preferencesSlice';
+} from '~/app/namespacesSlice';
+import { themeChanged } from '~/app/settings/preferences/preferencesSlice';
 import { useAppDispatch } from '~/data/hooks/store';
 import { Theme } from '~/types/Preferences';
 import { RouteMatches } from '~/types/Routes';

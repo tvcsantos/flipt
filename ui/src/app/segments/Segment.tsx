@@ -11,7 +11,7 @@ import { selectReadonly } from '~/app/meta/metaSlice';
 import {
   selectCurrentNamespace,
   selectNamespaces
-} from '~/app/namespaces/namespacesSlice';
+} from '~/app/namespacesSlice';
 import {
   useCopySegmentMutation,
   useDeleteConstraintMutation,
@@ -27,8 +27,8 @@ import Modal from '~/components/Modal';
 import MoreInfo from '~/components/MoreInfo';
 import CopyToNamespacePanel from '~/components/panels/CopyToNamespacePanel';
 import DeletePanel from '~/components/panels/DeletePanel';
-import ConstraintForm from '~/components/segments/ConstraintForm';
-import SegmentForm from '~/components/segments/SegmentForm';
+import ConstraintForm from '~/components/segments/forms/ConstraintForm';
+import SegmentForm from '~/components/segments/forms/SegmentForm';
 import Slideover from '~/components/Slideover';
 import { useError } from '~/data/hooks/error';
 import { useSuccess } from '~/data/hooks/success';

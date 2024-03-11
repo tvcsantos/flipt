@@ -7,7 +7,7 @@ import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import Combobox from '~/components/forms/Combobox';
 import 'chartjs-adapter-date-fns';
 import { addMinutes, format, parseISO } from 'date-fns';
-import { selectCurrentNamespace } from '~/app/namespaces/namespacesSlice';
+import { selectCurrentNamespace } from '~/app/namespacesSlice';
 import { IFlag } from '~/types/Flag';
 import { BarGraph } from '~/components/graphs';
 import { IFilterable } from '~/types/Selectable';

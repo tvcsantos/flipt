@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import {
   selectCurrentNamespace,
   selectNamespaces
-} from '~/app/namespaces/namespacesSlice';
+} from '~/app/namespacesSlice';
 import Button from '~/components/forms/buttons/Button';
 import Listbox from '~/components/forms/Listbox';
 import { SelectableNamespace } from '~/components/namespaces/NamespaceListbox';

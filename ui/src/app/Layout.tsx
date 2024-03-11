@@ -26,7 +26,7 @@ import {
   currentNamespaceChanged,
   selectCurrentNamespace,
   useListNamespacesQuery
-} from './namespaces/namespacesSlice';
+} from './namespacesSlice';
 import CommandDialog from '~/components/command/CommandDialog';
 
 function InnerLayout() {

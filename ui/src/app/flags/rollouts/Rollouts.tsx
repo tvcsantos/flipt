@@ -22,7 +22,7 @@ import {
   useOrderRolloutsMutation
 } from '~/app/flags/rolloutsApi';
 import { selectReadonly } from '~/app/meta/metaSlice';
-import { selectCurrentNamespace } from '~/app/namespaces/namespacesSlice';
+import { selectCurrentNamespace } from '~/app/namespacesSlice';
 import { useListSegmentsQuery } from '~/app/segments/segmentsApi';
 import Button from '~/components/forms/buttons/Button';
 import Modal from '~/components/Modal';

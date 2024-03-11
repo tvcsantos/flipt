@@ -1,0 +1,29 @@
+# exported by Flipt (dev) on 2024-03-11T17:52:26Z
+
+version: "1.2"
+namespace: default
+flags:
+- key: useNewPaymentGateway
+  name: useNewPaymentGateway
+  type: BOOLEAN_FLAG_TYPE
+  description: For migration from our legacy payment gateway
+  enabled: true
+  rollouts:
+  - segment:
+      key: Internal
+      value: true
+  - description: All users
+    threshold:
+      percentage: 10
+      value: true
+segments:
+- key: Internal
+  name: Internal
+  description: Our own internal users
+  constraints:
+  - type: STRING_COMPARISON_TYPE
+    property: email
+    operator: suffix
+    value: '@flipt.io'
+    description: Team members
+  match_type: ANY_MATCH_TYPE

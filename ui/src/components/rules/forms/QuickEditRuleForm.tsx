@@ -6,10 +6,10 @@ import {
   useUpdateRuleMutation
 } from '~/app/flags/rulesApi';
 import { selectReadonly } from '~/app/meta/metaSlice';
-import { selectCurrentNamespace } from '~/app/namespaces/namespacesSlice';
+import { selectCurrentNamespace } from '~/app/namespacesSlice';
 import TextButton from '~/components/forms/buttons/TextButton';
 import Combobox from '~/components/forms/Combobox';
-import SegmentsPicker from '~/components/forms/SegmentsPicker';
+import SegmentsPicker from '~/components/segments/forms/SegmentsPicker';
 import Loading from '~/components/Loading';
 import { useError } from '~/data/hooks/error';
 import { useSuccess } from '~/data/hooks/success';

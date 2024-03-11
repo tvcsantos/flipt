@@ -6,7 +6,7 @@ import * as Yup from 'yup';
 import {
   useCreateNamespaceMutation,
   useUpdateNamespaceMutation
-} from '~/app/namespaces/namespacesSlice';
+} from '~/app/namespacesSlice';
 import Button from '~/components/forms/buttons/Button';
 import Input from '~/components/forms/Input';
 import Loading from '~/components/Loading';

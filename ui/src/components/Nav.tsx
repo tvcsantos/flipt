@@ -7,7 +7,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useSelector } from 'react-redux';
 import { NavLink, useMatches } from 'react-router-dom';
-import { selectCurrentNamespace } from '~/app/namespaces/namespacesSlice';
+import { selectCurrentNamespace } from '~/app/namespacesSlice';
 import { cls } from '~/utils/helpers';
 import NamespaceListbox from './namespaces/NamespaceListbox';
 import { RouteMatches } from '~/types/Routes';

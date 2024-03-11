@@ -787,14 +787,30 @@ var AuthenticationMethodGithubService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	AuthorizationService_CreatePolicy_FullMethodName = "/flipt.auth.AuthorizationService/CreatePolicy"
+	AuthorizationService_CreateRole_FullMethodName            = "/flipt.auth.AuthorizationService/CreateRole"
+	AuthorizationService_GetRole_FullMethodName               = "/flipt.auth.AuthorizationService/GetRole"
+	AuthorizationService_UpdateRole_FullMethodName            = "/flipt.auth.AuthorizationService/UpdateRole"
+	AuthorizationService_DeleteRole_FullMethodName            = "/flipt.auth.AuthorizationService/DeleteRole"
+	AuthorizationService_ListRoles_FullMethodName             = "/flipt.auth.AuthorizationService/ListRoles"
+	AuthorizationService_CreateNamespacePolicy_FullMethodName = "/flipt.auth.AuthorizationService/CreateNamespacePolicy"
+	AuthorizationService_GetNamespacePolicy_FullMethodName    = "/flipt.auth.AuthorizationService/GetNamespacePolicy"
+	AuthorizationService_DeleteNamespacePolicy_FullMethodName = "/flipt.auth.AuthorizationService/DeleteNamespacePolicy"
+	AuthorizationService_ListNamespacePolicies_FullMethodName = "/flipt.auth.AuthorizationService/ListNamespacePolicies"
 )
 
 // AuthorizationServiceClient is the client API for AuthorizationService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthorizationServiceClient interface {
-	CreatePolicy(ctx context.Context, in *CreateAuthorizationPolicyRequest, opts ...grpc.CallOption) (*AuthorizationPolicy, error)
+	CreateRole(ctx context.Context, in *CreateRoleRequest, opts ...grpc.CallOption) (*AuthorizationRole, error)
+	GetRole(ctx context.Context, in *GetRoleRequest, opts ...grpc.CallOption) (*AuthorizationRole, error)
+	UpdateRole(ctx context.Context, in *UpdateRoleRequest, opts ...grpc.CallOption) (*AuthorizationRole, error)
+	DeleteRole(ctx context.Context, in *DeleteRoleRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	ListRoles(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (*ListRolesResponse, error)
+	CreateNamespacePolicy(ctx context.Context, in *CreateAuthorizationPolicyRequest, opts ...grpc.CallOption) (*AuthorizationPolicy, error)
+	GetNamespacePolicy(ctx context.Context, in *GetAuthorizationPolicyRequest, opts ...grpc.CallOption) (*AuthorizationPolicy, error)
+	DeleteNamespacePolicy(ctx context.Context, in *DeleteAuthorizationPolicyRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	ListNamespacePolicies(ctx context.Context, in *ListAuthorizationPoliciesRequest, opts ...grpc.CallOption) (*ListAuthorizationPoliciesResponse, error)
 }
 
 type authorizationServiceClient struct {
@@ -805,9 +821,81 @@ func NewAuthorizationServiceClient(cc grpc.ClientConnInterface) AuthorizationSer
 	return &authorizationServiceClient{cc}
 }
 
-func (c *authorizationServiceClient) CreatePolicy(ctx context.Context, in *CreateAuthorizationPolicyRequest, opts ...grpc.CallOption) (*AuthorizationPolicy, error) {
+func (c *authorizationServiceClient) CreateRole(ctx context.Context, in *CreateRoleRequest, opts ...grpc.CallOption) (*AuthorizationRole, error) {
+	out := new(AuthorizationRole)
+	err := c.cc.Invoke(ctx, AuthorizationService_CreateRole_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authorizationServiceClient) GetRole(ctx context.Context, in *GetRoleRequest, opts ...grpc.CallOption) (*AuthorizationRole, error) {
+	out := new(AuthorizationRole)
+	err := c.cc.Invoke(ctx, AuthorizationService_GetRole_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authorizationServiceClient) UpdateRole(ctx context.Context, in *UpdateRoleRequest, opts ...grpc.CallOption) (*AuthorizationRole, error) {
+	out := new(AuthorizationRole)
+	err := c.cc.Invoke(ctx, AuthorizationService_UpdateRole_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authorizationServiceClient) DeleteRole(ctx context.Context, in *DeleteRoleRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, AuthorizationService_DeleteRole_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authorizationServiceClient) ListRoles(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (*ListRolesResponse, error) {
+	out := new(ListRolesResponse)
+	err := c.cc.Invoke(ctx, AuthorizationService_ListRoles_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authorizationServiceClient) CreateNamespacePolicy(ctx context.Context, in *CreateAuthorizationPolicyRequest, opts ...grpc.CallOption) (*AuthorizationPolicy, error) {
 	out := new(AuthorizationPolicy)
-	err := c.cc.Invoke(ctx, AuthorizationService_CreatePolicy_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, AuthorizationService_CreateNamespacePolicy_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authorizationServiceClient) GetNamespacePolicy(ctx context.Context, in *GetAuthorizationPolicyRequest, opts ...grpc.CallOption) (*AuthorizationPolicy, error) {
+	out := new(AuthorizationPolicy)
+	err := c.cc.Invoke(ctx, AuthorizationService_GetNamespacePolicy_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authorizationServiceClient) DeleteNamespacePolicy(ctx context.Context, in *DeleteAuthorizationPolicyRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, AuthorizationService_DeleteNamespacePolicy_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authorizationServiceClient) ListNamespacePolicies(ctx context.Context, in *ListAuthorizationPoliciesRequest, opts ...grpc.CallOption) (*ListAuthorizationPoliciesResponse, error) {
+	out := new(ListAuthorizationPoliciesResponse)
+	err := c.cc.Invoke(ctx, AuthorizationService_ListNamespacePolicies_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -818,7 +906,15 @@ func (c *authorizationServiceClient) CreatePolicy(ctx context.Context, in *Creat
 // All implementations must embed UnimplementedAuthorizationServiceServer
 // for forward compatibility
 type AuthorizationServiceServer interface {
-	CreatePolicy(context.Context, *CreateAuthorizationPolicyRequest) (*AuthorizationPolicy, error)
+	CreateRole(context.Context, *CreateRoleRequest) (*AuthorizationRole, error)
+	GetRole(context.Context, *GetRoleRequest) (*AuthorizationRole, error)
+	UpdateRole(context.Context, *UpdateRoleRequest) (*AuthorizationRole, error)
+	DeleteRole(context.Context, *DeleteRoleRequest) (*emptypb.Empty, error)
+	ListRoles(context.Context, *ListRolesRequest) (*ListRolesResponse, error)
+	CreateNamespacePolicy(context.Context, *CreateAuthorizationPolicyRequest) (*AuthorizationPolicy, error)
+	GetNamespacePolicy(context.Context, *GetAuthorizationPolicyRequest) (*AuthorizationPolicy, error)
+	DeleteNamespacePolicy(context.Context, *DeleteAuthorizationPolicyRequest) (*emptypb.Empty, error)
+	ListNamespacePolicies(context.Context, *ListAuthorizationPoliciesRequest) (*ListAuthorizationPoliciesResponse, error)
 	mustEmbedUnimplementedAuthorizationServiceServer()
 }
 
@@ -826,8 +922,32 @@ type AuthorizationServiceServer interface {
 type UnimplementedAuthorizationServiceServer struct {
 }
 
-func (UnimplementedAuthorizationServiceServer) CreatePolicy(context.Context, *CreateAuthorizationPolicyRequest) (*AuthorizationPolicy, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreatePolicy not implemented")
+func (UnimplementedAuthorizationServiceServer) CreateRole(context.Context, *CreateRoleRequest) (*AuthorizationRole, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateRole not implemented")
+}
+func (UnimplementedAuthorizationServiceServer) GetRole(context.Context, *GetRoleRequest) (*AuthorizationRole, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRole not implemented")
+}
+func (UnimplementedAuthorizationServiceServer) UpdateRole(context.Context, *UpdateRoleRequest) (*AuthorizationRole, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateRole not implemented")
+}
+func (UnimplementedAuthorizationServiceServer) DeleteRole(context.Context, *DeleteRoleRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteRole not implemented")
+}
+func (UnimplementedAuthorizationServiceServer) ListRoles(context.Context, *ListRolesRequest) (*ListRolesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRoles not implemented")
+}
+func (UnimplementedAuthorizationServiceServer) CreateNamespacePolicy(context.Context, *CreateAuthorizationPolicyRequest) (*AuthorizationPolicy, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateNamespacePolicy not implemented")
+}
+func (UnimplementedAuthorizationServiceServer) GetNamespacePolicy(context.Context, *GetAuthorizationPolicyRequest) (*AuthorizationPolicy, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNamespacePolicy not implemented")
+}
+func (UnimplementedAuthorizationServiceServer) DeleteNamespacePolicy(context.Context, *DeleteAuthorizationPolicyRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteNamespacePolicy not implemented")
+}
+func (UnimplementedAuthorizationServiceServer) ListNamespacePolicies(context.Context, *ListAuthorizationPoliciesRequest) (*ListAuthorizationPoliciesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListNamespacePolicies not implemented")
 }
 func (UnimplementedAuthorizationServiceServer) mustEmbedUnimplementedAuthorizationServiceServer() {}
 
@@ -842,20 +962,164 @@ func RegisterAuthorizationServiceServer(s grpc.ServiceRegistrar, srv Authorizati
 	s.RegisterService(&AuthorizationService_ServiceDesc, srv)
 }
 
-func _AuthorizationService_CreatePolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AuthorizationService_CreateRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthorizationServiceServer).CreateRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthorizationService_CreateRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthorizationServiceServer).CreateRole(ctx, req.(*CreateRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthorizationService_GetRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthorizationServiceServer).GetRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthorizationService_GetRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthorizationServiceServer).GetRole(ctx, req.(*GetRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthorizationService_UpdateRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthorizationServiceServer).UpdateRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthorizationService_UpdateRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthorizationServiceServer).UpdateRole(ctx, req.(*UpdateRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthorizationService_DeleteRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthorizationServiceServer).DeleteRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthorizationService_DeleteRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthorizationServiceServer).DeleteRole(ctx, req.(*DeleteRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthorizationService_ListRoles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRolesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthorizationServiceServer).ListRoles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthorizationService_ListRoles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthorizationServiceServer).ListRoles(ctx, req.(*ListRolesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthorizationService_CreateNamespacePolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateAuthorizationPolicyRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthorizationServiceServer).CreatePolicy(ctx, in)
+		return srv.(AuthorizationServiceServer).CreateNamespacePolicy(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthorizationService_CreatePolicy_FullMethodName,
+		FullMethod: AuthorizationService_CreateNamespacePolicy_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthorizationServiceServer).CreatePolicy(ctx, req.(*CreateAuthorizationPolicyRequest))
+		return srv.(AuthorizationServiceServer).CreateNamespacePolicy(ctx, req.(*CreateAuthorizationPolicyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthorizationService_GetNamespacePolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAuthorizationPolicyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthorizationServiceServer).GetNamespacePolicy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthorizationService_GetNamespacePolicy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthorizationServiceServer).GetNamespacePolicy(ctx, req.(*GetAuthorizationPolicyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthorizationService_DeleteNamespacePolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAuthorizationPolicyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthorizationServiceServer).DeleteNamespacePolicy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthorizationService_DeleteNamespacePolicy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthorizationServiceServer).DeleteNamespacePolicy(ctx, req.(*DeleteAuthorizationPolicyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthorizationService_ListNamespacePolicies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAuthorizationPoliciesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthorizationServiceServer).ListNamespacePolicies(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthorizationService_ListNamespacePolicies_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthorizationServiceServer).ListNamespacePolicies(ctx, req.(*ListAuthorizationPoliciesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -868,8 +1132,40 @@ var AuthorizationService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AuthorizationServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CreatePolicy",
-			Handler:    _AuthorizationService_CreatePolicy_Handler,
+			MethodName: "CreateRole",
+			Handler:    _AuthorizationService_CreateRole_Handler,
+		},
+		{
+			MethodName: "GetRole",
+			Handler:    _AuthorizationService_GetRole_Handler,
+		},
+		{
+			MethodName: "UpdateRole",
+			Handler:    _AuthorizationService_UpdateRole_Handler,
+		},
+		{
+			MethodName: "DeleteRole",
+			Handler:    _AuthorizationService_DeleteRole_Handler,
+		},
+		{
+			MethodName: "ListRoles",
+			Handler:    _AuthorizationService_ListRoles_Handler,
+		},
+		{
+			MethodName: "CreateNamespacePolicy",
+			Handler:    _AuthorizationService_CreateNamespacePolicy_Handler,
+		},
+		{
+			MethodName: "GetNamespacePolicy",
+			Handler:    _AuthorizationService_GetNamespacePolicy_Handler,
+		},
+		{
+			MethodName: "DeleteNamespacePolicy",
+			Handler:    _AuthorizationService_DeleteNamespacePolicy_Handler,
+		},
+		{
+			MethodName: "ListNamespacePolicies",
+			Handler:    _AuthorizationService_ListNamespacePolicies_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

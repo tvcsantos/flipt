@@ -1,5 +1,5 @@
 import MoreInfo from '~/components/MoreInfo';
-import SegmentForm from '~/components/segments/SegmentForm';
+import SegmentForm from '~/components/segments/forms/SegmentForm';
 
 export default function NewSegment() {
   return (

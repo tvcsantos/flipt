@@ -13,7 +13,7 @@ import { INamespace } from '~/types/Namespace';
 import {
   useDeleteNamespaceMutation,
   useListNamespacesQuery
-} from './namespacesSlice';
+} from '~/app/namespacesSlice';
 
 export default function Namespaces() {
   const [showNamespaceForm, setShowNamespaceForm] = useState<boolean>(false);
@@ -32,7 +32,9 @@ export default function Namespaces() {
   const namespaces = useMemo(() => {
     return listNamespaces.data?.namespaces || [];
   }, [listNamespaces]);
+
   const readOnly = useSelector(selectReadonly);
+
   const [deleteNamespace] = useDeleteNamespaceMutation();
   const namespaceFormRef = useRef(null);
 

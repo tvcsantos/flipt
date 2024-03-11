@@ -312,6 +312,40 @@ http:
   - selector: flipt.auth.AuthenticationMethodGithubService.Callback
     get: /auth/v1/method/github/callback
 
+  # authorization
+  #
+  # roles
+  - selector: flipt.auth.AuthorizationService.GetRole
+    get: /auth/v1/roles/{id}
+
+  - selector: flipt.auth.AuthorizationService.ListRoles
+    get: /auth/v1/roles
+
+  - selector: flipt.auth.AuthorizationService.CreateRole
+    post: /auth/v1/roles
+    body: "*"
+
+  - selector: flipt.auth.AuthorizationService.UpdateRole
+    put: /auth/v1/roles/{id}
+    body: "*"
+
+  - selector: flipt.auth.AuthorizationService.DeleteRole
+    delete: /auth/v1/roles/{id}
+
+  # namespace policies
+  - selector: flipt.auth.AuthorizationService.CreateNamespacePolicy
+    post: /auth/v1/namespace/{namespace_key}/policies
+    body: "*"
+
+  - selector: flipt.auth.AuthorizationService.GetNamespacePolicy
+    get: /auth/v1/namespace/{namespace_key}/policies/{id}
+
+  - selector: flipt.auth.AuthorizationService.DeleteNamespacePolicy
+    post: /auth/v1/namespace/{namespace_key}/policies/{id}
+
+  - selector: flipt.auth.AuthorizationService.ListNamespacePolicies
+    get: /auth/v1/namespace/{namespace_key}/policies
+
   # internal routes
   - selector: flipt.evaluation.DataService.EvaluationSnapshotNamespace
     get: /internal/v1/evaluation/snapshot/namespace/{key}

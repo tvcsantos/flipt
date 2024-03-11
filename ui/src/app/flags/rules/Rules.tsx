@@ -23,7 +23,7 @@ import {
   useOrderRulesMutation
 } from '~/app/flags/rulesApi';
 import { selectReadonly } from '~/app/meta/metaSlice';
-import { selectCurrentNamespace } from '~/app/namespaces/namespacesSlice';
+import { selectCurrentNamespace } from '~/app/namespacesSlice';
 import { useListSegmentsQuery } from '~/app/segments/segmentsApi';
 import EmptyState from '~/components/EmptyState';
 import Button from '~/components/forms/buttons/Button';

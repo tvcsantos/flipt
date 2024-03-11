@@ -62,8 +62,17 @@ func WithNowFunc(fn func() *timestamppb.Timestamp) Option {
 	}
 }
 
-func (s *Store) CreatePolicy(ctx context.Context, req *rpcauth.CreateAuthorizationPolicyRequest) (*rpcauth.AuthorizationPolicy, error) {
+// WithIDGeneratorFunc overrides the stores ID generator function
+// used to generate new random ID strings, when creating new instances
+// of AuthorizationPolicies.
+// The default is a string containing a valid UUID (V4).
+func WithIDGeneratorFunc(fn func() string) Option {
+	return func(s *Store) {
+		s.generateID = fn
+	}
+}
 
+func (s *Store) CreateNamespacePolicy(ctx context.Context, req *rpcauth.CreateAuthorizationPolicyRequest) (*rpcauth.AuthorizationPolicy, error) {
 	var (
 		authorization = rpcauth.AuthorizationPolicy{
 			Id:           s.generateID(),
@@ -73,7 +82,7 @@ func (s *Store) CreatePolicy(ctx context.Context, req *rpcauth.CreateAuthorizati
 		}
 	)
 
-	if _, err := s.builder.Insert("namespace_permissions").
+	if _, err := s.builder.Insert("namespace_policies").
 		Columns(
 			"id",
 			"namespace_key",
@@ -95,7 +104,7 @@ func (s *Store) CreatePolicy(ctx context.Context, req *rpcauth.CreateAuthorizati
 	return &authorization, nil
 }
 
-func (s *Store) ListAuthorizationPolicies(ctx context.Context, req *storage.ListRequest[storageauth.ListAuthorizationPoliciesPredicate]) (set storage.ResultSet[*rpcauth.AuthorizationPolicy], err error) {
+func (s *Store) ListNamespacePolicies(ctx context.Context, req *storage.ListRequest[storageauth.ListAuthorizationPoliciesPredicate]) (set storage.ResultSet[*rpcauth.AuthorizationPolicy], err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf(
@@ -115,7 +124,14 @@ func (s *Store) ListAuthorizationPolicies(ctx context.Context, req *storage.List
 		"action",
 		"created_at",
 		"updated_at",
-	).From("namespace_permissions")
+	).From("namespace_policies").
+		Limit(req.QueryParams.Limit+1).
+		OrderBy(fmt.Sprintf("created_at %s", req.QueryParams.Order)).
+		GroupBy("namespace_key", "role_key", "action")
+
+	if req.Predicate.NamespaceKey != nil {
+		query = query.Where(sq.Eq{"namespace_key": *req.Predicate.NamespaceKey})
+	}
 
 	var offset int
 	if v, err := strconv.ParseInt(req.QueryParams.PageToken, 10, 64); err == nil {
@@ -125,7 +141,7 @@ func (s *Store) ListAuthorizationPolicies(ctx context.Context, req *storage.List
 
 	rows, err := query.QueryContext(ctx)
 	if err != nil {
-		return
+		return set, err
 	}
 
 	defer func() { _ = rows.Close() }()
@@ -146,7 +162,22 @@ func (s *Store) ListAuthorizationPolicies(ctx context.Context, req *storage.List
 		set.Results = append(set.Results, &authorization)
 	}
 
+	if err = rows.Err(); err != nil {
+		return
+	}
+
 	return
+}
+
+func (s *Store) DeleteNamespacePolicy(ctx context.Context, req *rpcauth.DeleteAuthorizationPolicyRequest) error {
+	_, err := s.builder.Delete("namespace_policies").
+		Where(sq.Eq{"id": req.Id}).
+		ExecContext(ctx)
+	if err != nil {
+		return fmt.Errorf("deleting authorization policy: %w", s.driver.AdaptError(err))
+	}
+
+	return nil
 }
 
 func (s *Store) scanAuthorizationPolicy(scanner sq.RowScanner, authorizationPolicy *rpcauth.AuthorizationPolicy) error {

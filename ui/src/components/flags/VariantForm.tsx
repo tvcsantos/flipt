@@ -8,7 +8,7 @@ import {
   useCreateVariantMutation,
   useUpdateVariantMutation
 } from '~/app/flags/flagsApi';
-import { selectCurrentNamespace } from '~/app/namespaces/namespacesSlice';
+import { selectCurrentNamespace } from '~/app/namespacesSlice';
 import Button from '~/components/forms/buttons/Button';
 import Input from '~/components/forms/Input';
 import TextArea from '~/components/forms/TextArea';
