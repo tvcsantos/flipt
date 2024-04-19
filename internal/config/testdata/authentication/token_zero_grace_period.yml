@@ -1,5 +1,7 @@
 authentication:
+  required: true
   methods:
     token:
+      enabled: true
       cleanup:
         grace_period: 0
